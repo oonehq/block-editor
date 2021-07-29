@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.ql-editor {
+    background-color: white;
+    min-height: 100px;
+    max-height: 250px;
+}
+
+.ql-align-center {
+    @apply text-center;
+}
+
+.ql-align-right {
+    @apply text-right;
+}
+
+ol {
+    @apply list-inside list-decimal py-3;
+}
+
+ul {
+    @apply list-inside list-disc py-3;
+}
