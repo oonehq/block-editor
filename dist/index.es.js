@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { Droppable, Draggable, DragDropContext } from 'react-beautiful-dnd';
-import create from 'zustand';
-import produce from 'immer';
-import { nanoid } from 'nanoid';
 import isEqual from 'react-fast-compare';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { ErrorBoundary } from 'react-error-boundary';
 import clsx from 'clsx';
+import create from 'zustand';
+import produce from 'immer';
+import { nanoid } from 'nanoid';
 import deepCopy from 'deep-copy';
 import { useForm, FormProvider, useWatch, useFormContext, useController, useFieldArray } from 'react-hook-form';
 import ReactQuill from 'react-quill';
@@ -59,18 +59,29 @@ var defaultState = {
     time: Date.now(),
     selected: null,
     tools: {},
+    source: null,
+    onChange: null,
     blocks: [],
 };
-var store = function (set, get) { return (__assign(__assign({}, defaultState), { init: function (value, tools) {
-        console.log("init", value, tools);
+var store = function (set, get) { return (__assign(__assign({}, defaultState), { init: function (source, tools, onChange) {
+        // console.log("init", value, tools)
         get().update(function (state) {
-            if (value) {
-                state.blocks = value;
+            if (source) {
+                state.source = source;
             }
             if (tools) {
                 state.tools = tools;
             }
+            if (onChange) {
+                state.onChange = onChange;
+            }
             state.selected = null;
+        });
+    }, setValue: function (value) {
+        get().update(function (state) {
+            if (value) {
+                state.blocks = value;
+            }
         });
     }, setSelected: function (id) {
         get().update(function (state) {
@@ -99,37 +110,67 @@ var store = function (set, get) { return (__assign(__assign({}, defaultState), {
                 version: get().tools[blockType].version,
             });
         });
+        console.log("addBlock onChange", get().onChange);
+        if (get().onChange)
+            get().onChange(get().blocks);
     }, moveBlock: function (sourceIndex, targetIndex) {
         get().update(function (state) {
             var removed = state.blocks.splice(sourceIndex, 1)[0];
             state.blocks.splice(targetIndex, 0, removed);
         });
+        if (get().onChange)
+            get().onChange(get().blocks);
     }, deleteBlock: function (blockID) {
         get().update(function (state) {
             state.selected = null;
             state.blocks = state.blocks.filter(function (block) { return block.id != blockID; });
         });
+        if (get().onChange)
+            get().onChange(get().blocks);
     }, update: function (fn) { return set(produce(fn)); } })); };
-var useBlockInputStore = create(store);
+var useBlockInputStore$1 = create(store);
+var blockEditorStore = store;
 
+var context = React.createContext(null);
+var useBlockInputStore = function () {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i] = arguments[_i];
+    }
+    return React.useContext(context).apply(void 0, args);
+};
+function BlockEditorContext(_a) {
+    var children = _a.children;
+    var useStore = React.useState(function () { return create(blockEditorStore); })[0];
+    return React.createElement(context.Provider, { value: useStore }, children);
+}
+
+var dev = process.env.NODE_ENV !== "production";
 var SettingsPanel = React.memo(function SettingsPanel(props) {
+    // source is same as in react-admin = path to section of record/object that is edited
     var blockMeta = useBlockInputStore(function (state) {
         var block = state.blocks.find(function (block) { return block.id == state.selected; });
         if (block) {
-            return { id: block.id, type: block.type, version: block.version };
+            var blockIndex = state.blocks.findIndex(function (block) { return block.id == state.selected; });
+            return {
+                id: block.id,
+                type: block.type,
+                version: block.version,
+                source: state.source + "[" + blockIndex + "].data",
+            };
         }
         return null;
     }, isEqual);
-    console.log("SettingsPanel render", blockMeta);
+    // console.log("SettingsPanel render", blockMeta)
     return (React.createElement("aside", { className: clsx("bg-gray-50 flex-0 p-2 transition-all overflow-auto", blockMeta ? "w-[400px]" : "w-[250px]") },
         React.createElement("header", { className: "text-center mb-4 text-sm" },
-            React.createElement("h2", null, "Settings"),
-            React.createElement("p", { className: "text-xs" },
+            React.createElement("h2", null, "\u00DApravy"),
+            dev ? (React.createElement("p", { className: "text-xs" },
                 "(", blockMeta === null || blockMeta === void 0 ? void 0 :
                 blockMeta.type,
-                "/", blockMeta === null || blockMeta === void 0 ? void 0 :
-                blockMeta.id,
-                ")")),
+                "@", blockMeta === null || blockMeta === void 0 ? void 0 :
+                blockMeta.source,
+                ")")) : null),
         React.createElement(ErrorBoundary, { fallbackRender: function (_a) {
                 var error = _a.error, resetErrorBoundary = _a.resetErrorBoundary;
                 return (React.createElement("div", { role: "alert" },
@@ -158,7 +199,7 @@ var LazySettings = React.memo(function LazySettings(props) {
     var Settings = React.useMemo(function () { var _a; return LazyloadComponent((_a = tools[props.blockMeta.type]) === null || _a === void 0 ? void 0 : _a.Settings); }, [props.blockMeta.id]);
     // console.log("LazySettings render", props.blockMeta, Settings)
     if (props.blockMeta && Settings) {
-        return React.createElement(Settings, { blockID: props.blockMeta.id });
+        return (React.createElement(Settings, { blockID: props.blockMeta.id, source: props.blockMeta.source }));
     }
     return null;
 }, isEqual);
@@ -168,7 +209,7 @@ var ToolsPanel = React.memo(function ToolsPanel(props) {
     var handleClickOutside = function () {
         setSelected(null);
     };
-    console.log("ToolsPanel render", tools);
+    // console.log("ToolsPanel render", tools)
     return (React.createElement("aside", { className: clsx("flex-0 bg-gray-100 py-2 transition-all", selected
             ? "w-[50px] hover:bg-gray-200 cursor-pointer group"
             : "w-[200px]"), onClick: handleClickOutside },
@@ -185,7 +226,7 @@ var ToolsPanel = React.memo(function ToolsPanel(props) {
             provided.placeholder)); })));
 });
 var ToolsItem = function (props) {
-    console.log("ToolsItem render");
+    // console.log("ToolsItem render")
     return (React.createElement("article", { className: "m-4" },
         React.createElement(Draggable, { draggableId: props.name, index: props.index }, function (provided, snapshot) {
             var _a, _b;
@@ -230,7 +271,7 @@ var PagePanel = React.memo(function PagePanel(props) {
             version: block.version,
         }); });
     }, isEqual);
-    console.log("PagePanel render", blocks);
+    // console.log("PagePanel render", blocks)
     return (React.createElement(Droppable, { droppableId: "page" }, function (provided, snapshot) { return (React.createElement("div", __assign({}, provided.droppableProps, { ref: provided.innerRef, className: clsx("relative min-h-[150px] w-full border border-gray-200 bg-white"
         // "min-w-[1024px]"
         ) }), blocks === null || blocks === void 0 ? void 0 :
@@ -283,10 +324,10 @@ var PageBlock = React.memo(function PageBlock(props) {
         e.stopPropagation();
     };
     var Block = (_b = (_a = tools[props.block.type]) === null || _a === void 0 ? void 0 : _a.Component) !== null && _b !== void 0 ? _b : MissingBlock;
-    console.log("PageBlock render", blockProps);
+    // console.log("PageBlock render", blockProps)
     return (React.createElement(Draggable, { draggableId: props.block.id, index: props.index }, function (provided, snapshot) { return (React.createElement("section", __assign({ ref: provided.innerRef }, provided.draggableProps, { className: clsx("relative", isSelected
-            ? "ring ring-gray-300"
-            : "hover:ring ring-gray-300"), onClick: handleClick }),
+            ? "ring ring-yellow-300"
+            : "hover:ring ring-yellow-300"), onClick: handleClick }),
         React.createElement("aside", { ref: toolbarRef, className: clsx("absolute -top-3 right-1 z-[9999]", isSelected ? "block" : "hidden") },
             React.createElement("section", { className: "btn-group" },
                 React.createElement("button", { className: "btn btn-xs", onClick: handleMoveUp },
@@ -312,30 +353,41 @@ var PageBlock = React.memo(function PageBlock(props) {
                 React.createElement(Block, __assign({}, blockProps)))))); }));
 });
 
-var BlockEditor = React.memo(function BlockEditor(props) {
+var BlockEditor = function (props) {
+    return (React.createElement(BlockEditorContext, null,
+        React.createElement(BlockEditorInstance, __assign({}, props))));
+};
+var BlockEditorInstance = React.memo(function BlockEditorInstance(props) {
     var _a = useBlockInputStore(function (state) { return [
         state.addBlock,
         state.moveBlock,
         state.setSelected,
+        state.setValue,
         state.init,
-    ]; }, isEqual), addBlock = _a[0], moveBlock = _a[1], setSelected = _a[2], initBlocks = _a[3];
+    ]; }, isEqual), addBlock = _a[0], moveBlock = _a[1], setSelected = _a[2], setValue = _a[3], initBlocks = _a[4];
     React.useEffect(function () {
-        initBlocks(props.value, props.tools);
+        initBlocks(props.source, props.tools, props.onChange);
     }, []);
     React.useEffect(function () {
-        var unsubscribe = useBlockInputStore.subscribe(function (blocks) {
-            props === null || props === void 0 ? void 0 : props.onChange(blocks);
-        }, function (state) { return state.blocks; });
-        return function () {
-            unsubscribe();
-        };
-    }, []);
+        setValue(props.value);
+    }, [props.value]);
+    // React.useEffect(() => {
+    //     const unsubscribe = useBlockInputStore.subscribe(
+    //         (blocks) => {
+    //             props?.onChange(blocks)
+    //         },
+    //         (state) => state.blocks
+    //     )
+    //     return () => {
+    //         unsubscribe()
+    //     }
+    // }, [])
     var handleClickOutside = function () {
         setSelected(null);
     };
     useHotkeys("esc", handleClickOutside);
     var handleDragEnd = function (result) {
-        console.log("result", result);
+        // console.log("result", result)
         var source = result.source, destination = result.destination;
         // dropped outside
         if (!destination) {
@@ -350,7 +402,7 @@ var BlockEditor = React.memo(function BlockEditor(props) {
             }
         }
     };
-    console.log("BlockEditor render");
+    // console.log("BlockEditor render")
     return (React.createElement("main", { className: "flex min-h-[500px] max-h-[80vh] border border-gray-200 rounded" },
         React.createElement(DragDropContext, { onDragEnd: handleDragEnd },
             React.createElement(ToolsPanel, null),
@@ -364,11 +416,11 @@ var SettingsForm = function (props) {
     if (!props.form) {
         var defaultValues = React.useMemo(function () {
             var _a;
-            return (_a = useBlockInputStore
+            return (_a = useBlockInputStore$1
                 .getState()
                 .blocks.find(function (block) { return block.id === props.blockID; })) === null || _a === void 0 ? void 0 : _a.data;
         }, [props.blockID]);
-        console.log("SettingsForm", defaultValues);
+        // console.log("SettingsForm", defaultValues)
         formMethods = useForm({
             defaultValues: deepCopy(defaultValues),
         });
@@ -376,19 +428,19 @@ var SettingsForm = function (props) {
     else {
         formMethods = props.form;
     }
-    console.log("SettingsForm render", props.blockID, formMethods);
+    // console.log("SettingsForm render", props.blockID, formMethods)
     return (React.createElement(FormProvider, __assign({}, formMethods),
         props.children,
         React.createElement(AutoSaveWatcher, { id: props.blockID, control: formMethods.control })));
 };
 var AutoSaveWatcher = function (_a) {
     var id = _a.id, control = _a.control;
-    var updateBlockData = useBlockInputStore(function (state) { return state.updateBlockData; });
+    var updateBlockData = useBlockInputStore$1(function (state) { return state.updateBlockData; });
     var data = useWatch({
         control: control,
     });
     React.useEffect(function () {
-        console.log("data change", id, data);
+        // console.log("data change", id, data)
         updateBlockData(id, data);
     }, [data]);
     return null;
@@ -400,7 +452,7 @@ var TextInput = function (props) {
         name: props.name,
         control: control,
     }).field;
-    console.log("TextInput render", control, field);
+    // console.log("TextInput render", control, field)
     return (React.createElement("div", { className: "form-control" },
         React.createElement("label", { className: "label", htmlFor: props.name },
             React.createElement("span", { className: "label-text" }, (_a = props.label) !== null && _a !== void 0 ? _a : props.name)),
@@ -499,8 +551,8 @@ var ArrayInput = function (props) {
                 label))));
 };
 var FieldLabel = function (_a) {
+    // console.log("FieldLabel render", field)
     var label = _a.label, field = _a.field;
-    console.log("FieldLabel render", field);
     if (label && typeof label === "string") {
         return label;
     }

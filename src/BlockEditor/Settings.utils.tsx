@@ -28,7 +28,7 @@ export const SettingsForm = (props) => {
                 .blocks.find((block) => block.id === props.blockID)?.data
         }, [props.blockID])
 
-        console.log("SettingsForm", defaultValues)
+        // console.log("SettingsForm", defaultValues)
 
         formMethods = useForm({
             defaultValues: deepCopy(defaultValues),
@@ -37,7 +37,7 @@ export const SettingsForm = (props) => {
         formMethods = props.form
     }
 
-    console.log("SettingsForm render", props.blockID, formMethods)
+    // console.log("SettingsForm render", props.blockID, formMethods)
 
     return (
         <FormProvider {...formMethods}>
@@ -55,7 +55,7 @@ const AutoSaveWatcher = ({ id, control }) => {
     })
 
     React.useEffect(() => {
-        console.log("data change", id, data)
+        // console.log("data change", id, data)
         updateBlockData(id, data)
     }, [data])
 
@@ -70,7 +70,7 @@ export const TextInput = (props) => {
         control,
     })
 
-    console.log("TextInput render", control, field)
+    // console.log("TextInput render", control, field)
 
     return (
         <div className="form-control">
@@ -267,7 +267,7 @@ export const ArrayInput = (props: ArrayInputProps) => {
 }
 
 const FieldLabel = ({ label, field }) => {
-    console.log("FieldLabel render", field)
+    // console.log("FieldLabel render", field)
 
     if (label && typeof label === "string") {
         return label

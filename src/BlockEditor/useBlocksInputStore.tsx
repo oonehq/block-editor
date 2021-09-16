@@ -1,3 +1,4 @@
+import * as React from "react"
 import create from "zustand"
 import produce from "immer"
 import { nanoid } from "nanoid"
@@ -6,6 +7,8 @@ const defaultState = {
     time: Date.now(),
     selected: null,
     tools: {},
+    source: null,
+    onChange: null,
     blocks: [] as Array<{
         id: string
         type: string
@@ -17,17 +20,27 @@ const defaultState = {
 
 const store = (set, get) => ({
     ...defaultState,
-    init: (value, tools) => {
-        console.log("init", value, tools)
+    init: (source, tools, onChange) => {
+        // console.log("init", value, tools)
 
         get().update((state) => {
-            if (value) {
-                state.blocks = value
+            if (source) {
+                state.source = source
             }
             if (tools) {
                 state.tools = tools
             }
+            if (onChange) {
+                state.onChange = onChange
+            }
             state.selected = null
+        })
+    },
+    setValue: (value) => {
+        get().update((state) => {
+            if (value) {
+                state.blocks = value
+            }
         })
     },
     setSelected: (id) => {
@@ -58,20 +71,26 @@ const store = (set, get) => ({
                 version: get().tools[blockType].version,
             })
         })
+        console.log("addBlock onChange", get().onChange)
+        if (get().onChange) get().onChange(get().blocks)
     },
     moveBlock: (sourceIndex, targetIndex) => {
         get().update((state) => {
             const [removed] = state.blocks.splice(sourceIndex, 1)
             state.blocks.splice(targetIndex, 0, removed)
         })
+        if (get().onChange) get().onChange(get().blocks)
     },
     deleteBlock: (blockID) => {
         get().update((state) => {
             state.selected = null
             state.blocks = state.blocks.filter((block) => block.id != blockID)
         })
+        if (get().onChange) get().onChange(get().blocks)
     },
     update: (fn) => set(produce(fn)),
 })
 
 export const useBlockInputStore = create(store)
+
+export const blockEditorStore = store

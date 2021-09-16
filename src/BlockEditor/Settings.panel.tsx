@@ -3,18 +3,29 @@ import { ErrorBoundary } from "react-error-boundary"
 import clsx from "clsx"
 import isEqual from "react-fast-compare"
 
-import { useBlockInputStore } from "./useBlocksInputStore"
+import { useBlockInputStore } from "./BlockEditorStoreProvider"
+
+const dev = process.env.NODE_ENV !== "production"
 
 export const SettingsPanel = React.memo(function SettingsPanel(props) {
+    // source is same as in react-admin = path to section of record/object that is edited
     const blockMeta = useBlockInputStore((state) => {
         let block = state.blocks.find((block) => block.id == state.selected)
         if (block) {
-            return { id: block.id, type: block.type, version: block.version }
+            let blockIndex = state.blocks.findIndex(
+                (block) => block.id == state.selected
+            )
+            return {
+                id: block.id,
+                type: block.type,
+                version: block.version,
+                source: `${state.source}[${blockIndex}].data`,
+            }
         }
         return null
     }, isEqual)
 
-    console.log("SettingsPanel render", blockMeta)
+    // console.log("SettingsPanel render", blockMeta)
 
     return (
         <aside
@@ -24,10 +35,12 @@ export const SettingsPanel = React.memo(function SettingsPanel(props) {
             )}
         >
             <header className="text-center mb-4 text-sm">
-                <h2>Settings</h2>
-                <p className="text-xs">
-                    ({blockMeta?.type}/{blockMeta?.id})
-                </p>
+                <h2>Úpravy</h2>
+                {dev ? (
+                    <p className="text-xs">
+                        ({blockMeta?.type}@{blockMeta?.source})
+                    </p>
+                ) : null}
             </header>
             <ErrorBoundary
                 fallbackRender={({ error, resetErrorBoundary }) => (
@@ -89,7 +102,12 @@ const LazySettings = React.memo(function LazySettings(props: {
     // console.log("LazySettings render", props.blockMeta, Settings)
 
     if (props.blockMeta && Settings) {
-        return <Settings blockID={props.blockMeta.id} />
+        return (
+            <Settings
+                blockID={props.blockMeta.id}
+                source={props.blockMeta.source}
+            />
+        )
     }
 
     return null

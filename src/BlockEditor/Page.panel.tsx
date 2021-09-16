@@ -2,7 +2,7 @@ import * as React from "react"
 
 import { Droppable, Draggable } from "react-beautiful-dnd"
 import clsx from "clsx"
-import { useBlockInputStore } from "./useBlocksInputStore"
+import { useBlockInputStore } from "./BlockEditorStoreProvider"
 import { ErrorBoundary } from "react-error-boundary"
 import isEqual from "react-fast-compare"
 
@@ -19,7 +19,7 @@ export const PagePanel = React.memo(function PagePanel(props) {
         isEqual
     )
 
-    console.log("PagePanel render", blocks)
+    // console.log("PagePanel render", blocks)
 
     return (
         <Droppable droppableId="page">
@@ -116,7 +116,7 @@ const PageBlock = React.memo(function PageBlock(props: any) {
 
     const Block = tools[props.block.type]?.Component ?? MissingBlock
 
-    console.log("PageBlock render", blockProps)
+    // console.log("PageBlock render", blockProps)
 
     return (
         <Draggable draggableId={props.block.id} index={props.index}>
@@ -127,8 +127,8 @@ const PageBlock = React.memo(function PageBlock(props: any) {
                     className={clsx(
                         "relative",
                         isSelected
-                            ? `ring ring-gray-300`
-                            : "hover:ring ring-gray-300"
+                            ? `ring ring-yellow-300`
+                            : "hover:ring ring-yellow-300"
                     )}
                     onClick={handleClick}
                 >

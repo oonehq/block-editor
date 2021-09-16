@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Draggable, Droppable } from "react-beautiful-dnd"
 import clsx from "clsx"
-import { useBlockInputStore } from "./useBlocksInputStore"
+import { useBlockInputStore } from "./BlockEditorStoreProvider"
 import isEqual from "react-fast-compare"
 
 export const ToolsPanel = React.memo(function ToolsPanel(props) {
@@ -14,7 +14,7 @@ export const ToolsPanel = React.memo(function ToolsPanel(props) {
         setSelected(null)
     }
 
-    console.log("ToolsPanel render", tools)
+    // console.log("ToolsPanel render", tools)
 
     return (
         <aside
@@ -64,7 +64,7 @@ export const ToolsPanel = React.memo(function ToolsPanel(props) {
 })
 
 const ToolsItem = (props) => {
-    console.log("ToolsItem render")
+    // console.log("ToolsItem render")
     return (
         <article className="m-4">
             <Draggable draggableId={props.name} index={props.index}>
