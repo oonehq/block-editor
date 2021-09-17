@@ -9,6 +9,7 @@ const defaultState = {
     tools: {},
     source: null,
     onChange: null,
+    toolbarOpen: false,
     blocks: [] as Array<{
         id: string
         type: string
@@ -87,6 +88,11 @@ const store = (set, get) => ({
             state.blocks = state.blocks.filter((block) => block.id != blockID)
         })
         if (get().onChange) get().onChange(get().blocks)
+    },
+    setToolbarOpen: (value: boolean) => {
+        get().update((state) => {
+            state.toolbarOpen = value
+        })
     },
     update: (fn) => set(produce(fn)),
 })

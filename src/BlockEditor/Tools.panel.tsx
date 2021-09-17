@@ -5,13 +5,13 @@ import { useBlockInputStore } from "./BlockEditorStoreProvider"
 import isEqual from "react-fast-compare"
 
 export const ToolsPanel = React.memo(function ToolsPanel(props) {
-    const [setSelected, selected, tools] = useBlockInputStore(
-        (state) => [state.setSelected, state.selected, state.tools],
+    const [setToolbarOpen, toolbarOpen, tools] = useBlockInputStore(
+        (state) => [state.setToolbarOpen, state.toolbarOpen, state.tools],
         isEqual
     )
 
     const handleClickOutside = () => {
-        setSelected(null)
+        setToolbarOpen(false)
     }
 
     // console.log("ToolsPanel render", tools)
@@ -19,15 +19,13 @@ export const ToolsPanel = React.memo(function ToolsPanel(props) {
     return (
         <aside
             className={clsx(
-                "flex-0 bg-gray-100 py-2 transition-all",
-                selected
-                    ? "w-[50px] hover:bg-gray-200 cursor-pointer group"
-                    : "w-[200px]"
+                "top-0 w-48 bg-gray-100 py-2 absolute h-full overflow-auto ease-in-out transition-all duration-300 z-[99999]",
+                toolbarOpen ? "left-0" : "-left-48"
             )}
             onClick={handleClickOutside}
         >
             <header className="text-center text-sm group-hover:underline">
-                Tools
+                Bloky
             </header>
             <Droppable droppableId="sidebar">
                 {(provided, snapshot) => (
@@ -37,14 +35,6 @@ export const ToolsPanel = React.memo(function ToolsPanel(props) {
                     >
                         {tools
                             ? Object.keys(tools).map((name, index) => {
-                                  if (selected) {
-                                      return (
-                                          <article
-                                              className="bg-white shadow-xl rounded p-1 w-5 h-5 mx-auto my-4"
-                                              key={`${name}-${index}`}
-                                          />
-                                      )
-                                  }
                                   return (
                                       <ToolsItem
                                           name={name}

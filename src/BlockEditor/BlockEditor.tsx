@@ -33,17 +33,24 @@ export const BlockEditor = (props: BlockEditorProps) => {
 export const BlockEditorInstance = React.memo(function BlockEditorInstance(
     props: BlockEditorProps
 ) {
-    const [addBlock, moveBlock, setSelected, setValue, initBlocks] =
-        useBlockInputStore(
-            (state) => [
-                state.addBlock,
-                state.moveBlock,
-                state.setSelected,
-                state.setValue,
-                state.init,
-            ],
-            isEqual
-        )
+    const [
+        addBlock,
+        moveBlock,
+        setSelected,
+        setValue,
+        initBlocks,
+        setToolbarOpen,
+    ] = useBlockInputStore(
+        (state) => [
+            state.addBlock,
+            state.moveBlock,
+            state.setSelected,
+            state.setValue,
+            state.init,
+            state.setToolbarOpen,
+        ],
+        isEqual
+    )
 
     React.useEffect(() => {
         initBlocks(props.source, props.tools, props.onChange)
@@ -53,23 +60,16 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
         setValue(props.value)
     }, [props.value])
 
-    // React.useEffect(() => {
-    //     const unsubscribe = useBlockInputStore.subscribe(
-    //         (blocks) => {
-    //             props?.onChange(blocks)
-    //         },
-    //         (state) => state.blocks
-    //     )
-
-    //     return () => {
-    //         unsubscribe()
-    //     }
-    // }, [])
-
     const handleClickOutside = () => {
         setSelected(null)
+        setToolbarOpen(false)
     }
+
     useHotkeys("esc", handleClickOutside)
+
+    const handleDragStart = (event) => {
+        setToolbarOpen(false)
+    }
 
     const handleDragEnd = (result) => {
         // console.log("result", result)
@@ -90,21 +90,42 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
         }
     }
 
+    const handleAdd = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+
+        setToolbarOpen(true)
+    }
+
     // console.log("BlockEditor render")
 
     return (
-        <main className="flex min-h-[500px] max-h-[80vh] border border-gray-200 rounded">
-            <DragDropContext onDragEnd={handleDragEnd}>
+        <main className="min-h-[500px] max-h-[80vh] border border-gray-200 rounded relative overflow-hidden">
+            <DragDropContext
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+            >
+                <header className="w-full h-8 bg-gray-50 flex justify-start items-center px-1">
+                    <button
+                        className="btn btn-outline btn-xs"
+                        onClick={handleAdd}
+                    >
+                        + Přidat blok
+                    </button>
+                </header>
+
                 <ToolsPanel />
 
-                <section
-                    className="bg-gray-300 flex-1 overflow-auto p-4 max-h-[80vh]"
-                    onClick={handleClickOutside}
-                >
-                    <PagePanel />
-                </section>
+                <section className="flex">
+                    <section
+                        className="bg-gray-300 flex-1 overflow-auto p-4 max-h-[80vh] relative"
+                        onClick={handleClickOutside}
+                    >
+                        <PagePanel />
+                    </section>
 
-                <SettingsPanel />
+                    <SettingsPanel />
+                </section>
             </DragDropContext>
         </main>
     )

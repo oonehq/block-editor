@@ -84,6 +84,7 @@
         tools: {},
         source: null,
         onChange: null,
+        toolbarOpen: false,
         blocks: [],
     };
     var store = function (set, get) { return (__assign(__assign({}, defaultState), { init: function (source, tools, onChange) {
@@ -150,6 +151,10 @@
             });
             if (get().onChange)
                 get().onChange(get().blocks);
+        }, setToolbarOpen: function (value) {
+            get().update(function (state) {
+                state.toolbarOpen = value;
+            });
         }, update: function (fn) { return set(produce__default['default'](fn)); } })); };
     var useBlockInputStore$1 = create__default['default'](store);
     var blockEditorStore = store;
@@ -185,7 +190,7 @@
             return null;
         }, isEqual__default['default']);
         // console.log("SettingsPanel render", blockMeta)
-        return (React__namespace.createElement("aside", { className: clsx__default['default']("bg-gray-50 flex-0 p-2 transition-all overflow-auto", blockMeta ? "w-[400px]" : "w-[250px]") },
+        return (React__namespace.createElement("aside", { className: clsx__default['default']("bg-gray-50 flex-0 p-2 transition-all overflow-auto w-[340px] xl:w-[400px]") },
             React__namespace.createElement("header", { className: "text-center mb-4 text-sm" },
                 React__namespace.createElement("h2", null, "\u00DApravy"),
                 dev ? (React__namespace.createElement("p", { className: "text-xs" },
@@ -228,21 +233,16 @@
     }, isEqual__default['default']);
 
     var ToolsPanel = React__namespace.memo(function ToolsPanel(props) {
-        var _a = useBlockInputStore(function (state) { return [state.setSelected, state.selected, state.tools]; }, isEqual__default['default']), setSelected = _a[0], selected = _a[1], tools = _a[2];
+        var _a = useBlockInputStore(function (state) { return [state.setToolbarOpen, state.toolbarOpen, state.tools]; }, isEqual__default['default']), setToolbarOpen = _a[0], toolbarOpen = _a[1], tools = _a[2];
         var handleClickOutside = function () {
-            setSelected(null);
+            setToolbarOpen(false);
         };
         // console.log("ToolsPanel render", tools)
-        return (React__namespace.createElement("aside", { className: clsx__default['default']("flex-0 bg-gray-100 py-2 transition-all", selected
-                ? "w-[50px] hover:bg-gray-200 cursor-pointer group"
-                : "w-[200px]"), onClick: handleClickOutside },
-            React__namespace.createElement("header", { className: "text-center text-sm group-hover:underline" }, "Tools"),
+        return (React__namespace.createElement("aside", { className: clsx__default['default']("top-0 w-48 bg-gray-100 py-2 absolute h-full overflow-auto ease-in-out transition-all duration-300 z-[99999]", toolbarOpen ? "left-0" : "-left-48"), onClick: handleClickOutside },
+            React__namespace.createElement("header", { className: "text-center text-sm group-hover:underline" }, "Bloky"),
             React__namespace.createElement(reactBeautifulDnd.Droppable, { droppableId: "sidebar" }, function (provided, snapshot) { return (React__namespace.createElement("section", __assign({ ref: provided.innerRef }, provided.droppableProps),
                 tools
                     ? Object.keys(tools).map(function (name, index) {
-                        if (selected) {
-                            return (React__namespace.createElement("article", { className: "bg-white shadow-xl rounded p-1 w-5 h-5 mx-auto my-4", key: name + "-" + index }));
-                        }
                         return (React__namespace.createElement(ToolsItem, { name: name, index: index, block: tools[name], key: name + "-" + index }));
                     })
                     : null,
@@ -319,11 +319,12 @@
             state.moveBlock,
             state.blocks.length,
             state.tools,
-        ]; }, isEqual__default['default']), setSelected = _c[0], isSelected = _c[1], deleteBlock = _c[2], moveBlock = _c[3], blocksCount = _c[4], tools = _c[5];
+            state.setToolbarOpen,
+        ]; }, isEqual__default['default']), setSelected = _c[0], isSelected = _c[1], deleteBlock = _c[2], moveBlock = _c[3], blocksCount = _c[4], tools = _c[5], setToolbarOpen = _c[6];
         var blockProps = useBlockInputStore(function (state) { return state.blocks.find(function (block) { return block.id === props.block.id; }); }, isEqual__default['default']);
-        var toolbarRef = React__namespace.useRef(null);
         var handleClick = function (e) {
             setSelected(props.block.id);
+            setToolbarOpen(false);
             e.stopPropagation();
         };
         var handleDelete = function (e) {
@@ -351,7 +352,7 @@
         return (React__namespace.createElement(reactBeautifulDnd.Draggable, { draggableId: props.block.id, index: props.index }, function (provided, snapshot) { return (React__namespace.createElement("section", __assign({ ref: provided.innerRef }, provided.draggableProps, { className: clsx__default['default']("relative", isSelected
                 ? "ring ring-yellow-300"
                 : "hover:ring ring-yellow-300"), onClick: handleClick }),
-            React__namespace.createElement("aside", { ref: toolbarRef, className: clsx__default['default']("absolute -top-3 right-1 z-[9999]", isSelected ? "block" : "hidden") },
+            React__namespace.createElement("aside", { className: clsx__default['default']("absolute -top-3 right-1 z-[9999]", isSelected ? "block" : "hidden") },
                 React__namespace.createElement("section", { className: "btn-group" },
                     React__namespace.createElement("button", { className: "btn btn-xs", onClick: handleMoveUp },
                         React__namespace.createElement(ChevronUp, { className: "w-4", label: "Move up" })),
@@ -387,28 +388,22 @@
             state.setSelected,
             state.setValue,
             state.init,
-        ]; }, isEqual__default['default']), addBlock = _a[0], moveBlock = _a[1], setSelected = _a[2], setValue = _a[3], initBlocks = _a[4];
+            state.setToolbarOpen,
+        ]; }, isEqual__default['default']), addBlock = _a[0], moveBlock = _a[1], setSelected = _a[2], setValue = _a[3], initBlocks = _a[4], setToolbarOpen = _a[5];
         React__namespace.useEffect(function () {
             initBlocks(props.source, props.tools, props.onChange);
         }, []);
         React__namespace.useEffect(function () {
             setValue(props.value);
         }, [props.value]);
-        // React.useEffect(() => {
-        //     const unsubscribe = useBlockInputStore.subscribe(
-        //         (blocks) => {
-        //             props?.onChange(blocks)
-        //         },
-        //         (state) => state.blocks
-        //     )
-        //     return () => {
-        //         unsubscribe()
-        //     }
-        // }, [])
         var handleClickOutside = function () {
             setSelected(null);
+            setToolbarOpen(false);
         };
         reactHotkeysHook.useHotkeys("esc", handleClickOutside);
+        var handleDragStart = function (event) {
+            setToolbarOpen(false);
+        };
         var handleDragEnd = function (result) {
             // console.log("result", result)
             var source = result.source, destination = result.destination;
@@ -425,13 +420,21 @@
                 }
             }
         };
+        var handleAdd = function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            setToolbarOpen(true);
+        };
         // console.log("BlockEditor render")
-        return (React__namespace.createElement("main", { className: "flex min-h-[500px] max-h-[80vh] border border-gray-200 rounded" },
-            React__namespace.createElement(reactBeautifulDnd.DragDropContext, { onDragEnd: handleDragEnd },
+        return (React__namespace.createElement("main", { className: "min-h-[500px] max-h-[80vh] border border-gray-200 rounded relative overflow-hidden" },
+            React__namespace.createElement(reactBeautifulDnd.DragDropContext, { onDragStart: handleDragStart, onDragEnd: handleDragEnd },
+                React__namespace.createElement("header", { className: "w-full h-8 bg-gray-50 flex justify-start items-center px-1" },
+                    React__namespace.createElement("button", { className: "btn btn-outline btn-xs", onClick: handleAdd }, "+ P\u0159idat blok")),
                 React__namespace.createElement(ToolsPanel, null),
-                React__namespace.createElement("section", { className: "bg-gray-300 flex-1 overflow-auto p-4 max-h-[80vh]", onClick: handleClickOutside },
-                    React__namespace.createElement(PagePanel, null)),
-                React__namespace.createElement(SettingsPanel, null))));
+                React__namespace.createElement("section", { className: "flex" },
+                    React__namespace.createElement("section", { className: "bg-gray-300 flex-1 overflow-auto p-4 max-h-[80vh] relative", onClick: handleClickOutside },
+                        React__namespace.createElement(PagePanel, null)),
+                    React__namespace.createElement(SettingsPanel, null)))));
     }, isEqual__default['default']);
 
     var SettingsForm = function (props) {

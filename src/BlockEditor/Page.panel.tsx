@@ -66,6 +66,7 @@ const PageBlock = React.memo(function PageBlock(props: any) {
         moveBlock,
         blocksCount,
         tools,
+        setToolbarOpen,
     ] = useBlockInputStore(
         (state) => [
             state.setSelected,
@@ -74,6 +75,7 @@ const PageBlock = React.memo(function PageBlock(props: any) {
             state.moveBlock,
             state.blocks.length,
             state.tools,
+            state.setToolbarOpen,
         ],
         isEqual
     )
@@ -83,10 +85,9 @@ const PageBlock = React.memo(function PageBlock(props: any) {
         isEqual
     )
 
-    const toolbarRef = React.useRef(null)
-
     const handleClick = (e) => {
         setSelected(props.block.id)
+        setToolbarOpen(false)
         e.stopPropagation()
     }
 
@@ -133,7 +134,6 @@ const PageBlock = React.memo(function PageBlock(props: any) {
                     onClick={handleClick}
                 >
                     <aside
-                        ref={toolbarRef}
                         className={clsx(
                             `absolute -top-3 right-1 z-[9999]`,
                             isSelected ? "block" : "hidden"

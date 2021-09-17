@@ -61,6 +61,7 @@ var defaultState = {
     tools: {},
     source: null,
     onChange: null,
+    toolbarOpen: false,
     blocks: [],
 };
 var store = function (set, get) { return (__assign(__assign({}, defaultState), { init: function (source, tools, onChange) {
@@ -127,6 +128,10 @@ var store = function (set, get) { return (__assign(__assign({}, defaultState), {
         });
         if (get().onChange)
             get().onChange(get().blocks);
+    }, setToolbarOpen: function (value) {
+        get().update(function (state) {
+            state.toolbarOpen = value;
+        });
     }, update: function (fn) { return set(produce(fn)); } })); };
 var useBlockInputStore$1 = create(store);
 var blockEditorStore = store;
@@ -162,7 +167,7 @@ var SettingsPanel = React.memo(function SettingsPanel(props) {
         return null;
     }, isEqual);
     // console.log("SettingsPanel render", blockMeta)
-    return (React.createElement("aside", { className: clsx("bg-gray-50 flex-0 p-2 transition-all overflow-auto", blockMeta ? "w-[400px]" : "w-[250px]") },
+    return (React.createElement("aside", { className: clsx("bg-gray-50 flex-0 p-2 transition-all overflow-auto w-[340px] xl:w-[400px]") },
         React.createElement("header", { className: "text-center mb-4 text-sm" },
             React.createElement("h2", null, "\u00DApravy"),
             dev ? (React.createElement("p", { className: "text-xs" },
@@ -205,21 +210,16 @@ var LazySettings = React.memo(function LazySettings(props) {
 }, isEqual);
 
 var ToolsPanel = React.memo(function ToolsPanel(props) {
-    var _a = useBlockInputStore(function (state) { return [state.setSelected, state.selected, state.tools]; }, isEqual), setSelected = _a[0], selected = _a[1], tools = _a[2];
+    var _a = useBlockInputStore(function (state) { return [state.setToolbarOpen, state.toolbarOpen, state.tools]; }, isEqual), setToolbarOpen = _a[0], toolbarOpen = _a[1], tools = _a[2];
     var handleClickOutside = function () {
-        setSelected(null);
+        setToolbarOpen(false);
     };
     // console.log("ToolsPanel render", tools)
-    return (React.createElement("aside", { className: clsx("flex-0 bg-gray-100 py-2 transition-all", selected
-            ? "w-[50px] hover:bg-gray-200 cursor-pointer group"
-            : "w-[200px]"), onClick: handleClickOutside },
-        React.createElement("header", { className: "text-center text-sm group-hover:underline" }, "Tools"),
+    return (React.createElement("aside", { className: clsx("top-0 w-48 bg-gray-100 py-2 absolute h-full overflow-auto ease-in-out transition-all duration-300 z-[99999]", toolbarOpen ? "left-0" : "-left-48"), onClick: handleClickOutside },
+        React.createElement("header", { className: "text-center text-sm group-hover:underline" }, "Bloky"),
         React.createElement(Droppable, { droppableId: "sidebar" }, function (provided, snapshot) { return (React.createElement("section", __assign({ ref: provided.innerRef }, provided.droppableProps),
             tools
                 ? Object.keys(tools).map(function (name, index) {
-                    if (selected) {
-                        return (React.createElement("article", { className: "bg-white shadow-xl rounded p-1 w-5 h-5 mx-auto my-4", key: name + "-" + index }));
-                    }
                     return (React.createElement(ToolsItem, { name: name, index: index, block: tools[name], key: name + "-" + index }));
                 })
                 : null,
@@ -296,11 +296,12 @@ var PageBlock = React.memo(function PageBlock(props) {
         state.moveBlock,
         state.blocks.length,
         state.tools,
-    ]; }, isEqual), setSelected = _c[0], isSelected = _c[1], deleteBlock = _c[2], moveBlock = _c[3], blocksCount = _c[4], tools = _c[5];
+        state.setToolbarOpen,
+    ]; }, isEqual), setSelected = _c[0], isSelected = _c[1], deleteBlock = _c[2], moveBlock = _c[3], blocksCount = _c[4], tools = _c[5], setToolbarOpen = _c[6];
     var blockProps = useBlockInputStore(function (state) { return state.blocks.find(function (block) { return block.id === props.block.id; }); }, isEqual);
-    var toolbarRef = React.useRef(null);
     var handleClick = function (e) {
         setSelected(props.block.id);
+        setToolbarOpen(false);
         e.stopPropagation();
     };
     var handleDelete = function (e) {
@@ -328,7 +329,7 @@ var PageBlock = React.memo(function PageBlock(props) {
     return (React.createElement(Draggable, { draggableId: props.block.id, index: props.index }, function (provided, snapshot) { return (React.createElement("section", __assign({ ref: provided.innerRef }, provided.draggableProps, { className: clsx("relative", isSelected
             ? "ring ring-yellow-300"
             : "hover:ring ring-yellow-300"), onClick: handleClick }),
-        React.createElement("aside", { ref: toolbarRef, className: clsx("absolute -top-3 right-1 z-[9999]", isSelected ? "block" : "hidden") },
+        React.createElement("aside", { className: clsx("absolute -top-3 right-1 z-[9999]", isSelected ? "block" : "hidden") },
             React.createElement("section", { className: "btn-group" },
                 React.createElement("button", { className: "btn btn-xs", onClick: handleMoveUp },
                     React.createElement(ChevronUp, { className: "w-4", label: "Move up" })),
@@ -364,28 +365,22 @@ var BlockEditorInstance = React.memo(function BlockEditorInstance(props) {
         state.setSelected,
         state.setValue,
         state.init,
-    ]; }, isEqual), addBlock = _a[0], moveBlock = _a[1], setSelected = _a[2], setValue = _a[3], initBlocks = _a[4];
+        state.setToolbarOpen,
+    ]; }, isEqual), addBlock = _a[0], moveBlock = _a[1], setSelected = _a[2], setValue = _a[3], initBlocks = _a[4], setToolbarOpen = _a[5];
     React.useEffect(function () {
         initBlocks(props.source, props.tools, props.onChange);
     }, []);
     React.useEffect(function () {
         setValue(props.value);
     }, [props.value]);
-    // React.useEffect(() => {
-    //     const unsubscribe = useBlockInputStore.subscribe(
-    //         (blocks) => {
-    //             props?.onChange(blocks)
-    //         },
-    //         (state) => state.blocks
-    //     )
-    //     return () => {
-    //         unsubscribe()
-    //     }
-    // }, [])
     var handleClickOutside = function () {
         setSelected(null);
+        setToolbarOpen(false);
     };
     useHotkeys("esc", handleClickOutside);
+    var handleDragStart = function (event) {
+        setToolbarOpen(false);
+    };
     var handleDragEnd = function (result) {
         // console.log("result", result)
         var source = result.source, destination = result.destination;
@@ -402,13 +397,21 @@ var BlockEditorInstance = React.memo(function BlockEditorInstance(props) {
             }
         }
     };
+    var handleAdd = function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        setToolbarOpen(true);
+    };
     // console.log("BlockEditor render")
-    return (React.createElement("main", { className: "flex min-h-[500px] max-h-[80vh] border border-gray-200 rounded" },
-        React.createElement(DragDropContext, { onDragEnd: handleDragEnd },
+    return (React.createElement("main", { className: "min-h-[500px] max-h-[80vh] border border-gray-200 rounded relative overflow-hidden" },
+        React.createElement(DragDropContext, { onDragStart: handleDragStart, onDragEnd: handleDragEnd },
+            React.createElement("header", { className: "w-full h-8 bg-gray-50 flex justify-start items-center px-1" },
+                React.createElement("button", { className: "btn btn-outline btn-xs", onClick: handleAdd }, "+ P\u0159idat blok")),
             React.createElement(ToolsPanel, null),
-            React.createElement("section", { className: "bg-gray-300 flex-1 overflow-auto p-4 max-h-[80vh]", onClick: handleClickOutside },
-                React.createElement(PagePanel, null)),
-            React.createElement(SettingsPanel, null))));
+            React.createElement("section", { className: "flex" },
+                React.createElement("section", { className: "bg-gray-300 flex-1 overflow-auto p-4 max-h-[80vh] relative", onClick: handleClickOutside },
+                    React.createElement(PagePanel, null)),
+                React.createElement(SettingsPanel, null)))));
 }, isEqual);
 
 var SettingsForm = function (props) {
