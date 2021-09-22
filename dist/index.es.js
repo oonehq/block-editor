@@ -167,7 +167,7 @@ var SettingsPanel = React.memo(function SettingsPanel(props) {
         return null;
     }, isEqual);
     // console.log("SettingsPanel render", blockMeta)
-    return (React.createElement("aside", { className: clsx("bg-gray-50 flex-0 p-2 transition-all overflow-auto w-[340px] xl:w-[400px]") },
+    return (React.createElement("aside", { className: clsx("bg-gray-50 flex-0 p-2 w-[340px] xl:w-[400px] overflow-auto max-h-[80vh] ") },
         React.createElement("header", { className: "text-center mb-4 text-sm" },
             React.createElement("h2", null, "\u00DApravy"),
             dev ? (React.createElement("p", { className: "text-xs" },
@@ -403,13 +403,13 @@ var BlockEditorInstance = React.memo(function BlockEditorInstance(props) {
         setToolbarOpen(true);
     };
     // console.log("BlockEditor render")
-    return (React.createElement("main", { className: "min-h-[500px] max-h-[80vh] border border-gray-200 rounded relative overflow-hidden" },
+    return (React.createElement("main", { className: "min-h-[500px] max-h-[85vh] border border-gray-200 rounded relative overflow-hidden" },
         React.createElement(DragDropContext, { onDragStart: handleDragStart, onDragEnd: handleDragEnd },
             React.createElement("header", { className: "w-full h-8 bg-gray-50 flex justify-start items-center px-1" },
                 React.createElement("button", { className: "btn btn-outline btn-xs", onClick: handleAdd }, "+ P\u0159idat blok")),
             React.createElement(ToolsPanel, null),
             React.createElement("section", { className: "flex" },
-                React.createElement("section", { className: "bg-gray-300 flex-1 overflow-auto p-4 max-h-[80vh] relative", onClick: handleClickOutside },
+                React.createElement("section", { className: "bg-gray-300 flex-1 overflow-auto p-4 h-[80vh] relative", onClick: handleClickOutside },
                     React.createElement(PagePanel, null)),
                 React.createElement(SettingsPanel, null)))));
 }, isEqual);

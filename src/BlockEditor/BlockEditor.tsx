@@ -100,7 +100,7 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
     // console.log("BlockEditor render")
 
     return (
-        <main className="min-h-[500px] max-h-[80vh] border border-gray-200 rounded relative overflow-hidden">
+        <main className="min-h-[500px] max-h-[85vh] border border-gray-200 rounded relative overflow-hidden">
             <DragDropContext
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
@@ -118,7 +118,7 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
 
                 <section className="flex">
                     <section
-                        className="bg-gray-300 flex-1 overflow-auto p-4 max-h-[80vh] relative"
+                        className="bg-gray-300 flex-1 overflow-auto p-4 h-[80vh] relative"
                         onClick={handleClickOutside}
                     >
                         <PagePanel />

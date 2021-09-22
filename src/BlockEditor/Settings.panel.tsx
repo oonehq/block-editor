@@ -30,7 +30,7 @@ export const SettingsPanel = React.memo(function SettingsPanel(props) {
     return (
         <aside
             className={clsx(
-                "bg-gray-50 flex-0 p-2 transition-all overflow-auto w-[340px] xl:w-[400px]"
+                "bg-gray-50 flex-0 p-2 w-[340px] xl:w-[400px] overflow-auto max-h-[80vh] "
             )}
         >
             <header className="text-center mb-4 text-sm">

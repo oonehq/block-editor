@@ -190,7 +190,7 @@
             return null;
         }, isEqual__default['default']);
         // console.log("SettingsPanel render", blockMeta)
-        return (React__namespace.createElement("aside", { className: clsx__default['default']("bg-gray-50 flex-0 p-2 transition-all overflow-auto w-[340px] xl:w-[400px]") },
+        return (React__namespace.createElement("aside", { className: clsx__default['default']("bg-gray-50 flex-0 p-2 w-[340px] xl:w-[400px] overflow-auto max-h-[80vh] ") },
             React__namespace.createElement("header", { className: "text-center mb-4 text-sm" },
                 React__namespace.createElement("h2", null, "\u00DApravy"),
                 dev ? (React__namespace.createElement("p", { className: "text-xs" },
@@ -426,13 +426,13 @@
             setToolbarOpen(true);
         };
         // console.log("BlockEditor render")
-        return (React__namespace.createElement("main", { className: "min-h-[500px] max-h-[80vh] border border-gray-200 rounded relative overflow-hidden" },
+        return (React__namespace.createElement("main", { className: "min-h-[500px] max-h-[85vh] border border-gray-200 rounded relative overflow-hidden" },
             React__namespace.createElement(reactBeautifulDnd.DragDropContext, { onDragStart: handleDragStart, onDragEnd: handleDragEnd },
                 React__namespace.createElement("header", { className: "w-full h-8 bg-gray-50 flex justify-start items-center px-1" },
                     React__namespace.createElement("button", { className: "btn btn-outline btn-xs", onClick: handleAdd }, "+ P\u0159idat blok")),
                 React__namespace.createElement(ToolsPanel, null),
                 React__namespace.createElement("section", { className: "flex" },
-                    React__namespace.createElement("section", { className: "bg-gray-300 flex-1 overflow-auto p-4 max-h-[80vh] relative", onClick: handleClickOutside },
+                    React__namespace.createElement("section", { className: "bg-gray-300 flex-1 overflow-auto p-4 h-[80vh] relative", onClick: handleClickOutside },
                         React__namespace.createElement(PagePanel, null)),
                     React__namespace.createElement(SettingsPanel, null)))));
     }, isEqual__default['default']);
