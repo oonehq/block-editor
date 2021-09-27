@@ -1,8 +1,8 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('react'), require('react-beautiful-dnd'), require('react-fast-compare'), require('react-hotkeys-hook'), require('react-error-boundary'), require('clsx'), require('zustand'), require('immer'), require('nanoid'), require('deep-copy'), require('react-hook-form'), require('react-quill')) :
-    typeof define === 'function' && define.amd ? define(['exports', 'react', 'react-beautiful-dnd', 'react-fast-compare', 'react-hotkeys-hook', 'react-error-boundary', 'clsx', 'zustand', 'immer', 'nanoid', 'deep-copy', 'react-hook-form', 'react-quill'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.BlockEditor = {}, global.React, global.reactBeautifulDnd, global.isEqual, global.reactHotkeysHook, global.reactErrorBoundary, global.clsx, global.create, global.produce, global.nanoid, global.deepCopy, global.reactHookForm, global.ReactQuill));
-}(this, (function (exports, React, reactBeautifulDnd, isEqual, reactHotkeysHook, reactErrorBoundary, clsx, create, produce, nanoid, deepCopy, reactHookForm, ReactQuill) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('react'), require('react-beautiful-dnd'), require('react-fast-compare'), require('react-hotkeys-hook'), require('react-error-boundary'), require('clsx'), require('react-rnd'), require('zustand'), require('immer'), require('nanoid'), require('deep-copy'), require('react-hook-form'), require('react-quill')) :
+    typeof define === 'function' && define.amd ? define(['exports', 'react', 'react-beautiful-dnd', 'react-fast-compare', 'react-hotkeys-hook', 'react-error-boundary', 'clsx', 'react-rnd', 'zustand', 'immer', 'nanoid', 'deep-copy', 'react-hook-form', 'react-quill'], factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.BlockEditor = {}, global.React, global.reactBeautifulDnd, global.isEqual, global.reactHotkeysHook, global.reactErrorBoundary, global.clsx, global.reactRnd, global.create, global.produce, global.nanoid, global.deepCopy, global.reactHookForm, global.ReactQuill));
+}(this, (function (exports, React, reactBeautifulDnd, isEqual, reactHotkeysHook, reactErrorBoundary, clsx, reactRnd, create, produce, nanoid, deepCopy, reactHookForm, ReactQuill) { 'use strict';
 
     function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -173,8 +173,39 @@
         return React__namespace.createElement(context.Provider, { value: useStore }, children);
     }
 
-    var dev = process.env.NODE_ENV !== "production";
+    var ChevronUp = function (props) {
+        return (React__namespace.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "3", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
+            React__namespace.createElement("polyline", { points: "18 15 12 9 6 15" })));
+    };
+    var ChevronDown = function (props) {
+        return (React__namespace.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "3", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
+            React__namespace.createElement("polyline", { points: "6 9 12 15 18 9" })));
+    };
+    var Trash = function (props) {
+        return (React__namespace.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
+            React__namespace.createElement("polyline", { points: "3 6 5 6 21 6" }),
+            React__namespace.createElement("path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" }),
+            React__namespace.createElement("line", { x1: "10", y1: "11", x2: "10", y2: "17" }),
+            React__namespace.createElement("line", { x1: "14", y1: "11", x2: "14", y2: "17" })));
+    };
+    var Move = function (props) {
+        return (React__namespace.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
+            React__namespace.createElement("polyline", { points: "5 9 2 12 5 15" }),
+            React__namespace.createElement("polyline", { points: "9 5 12 2 15 5" }),
+            React__namespace.createElement("polyline", { points: "15 19 12 22 9 19" }),
+            React__namespace.createElement("polyline", { points: "19 9 22 12 19 15" }),
+            React__namespace.createElement("line", { x1: "2", y1: "12", x2: "22", y2: "12" }),
+            React__namespace.createElement("line", { x1: "12", y1: "2", x2: "12", y2: "22" })));
+    };
+    var Close = function (props) {
+        return (React__namespace.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
+            React__namespace.createElement("line", { x1: "18", y1: "6", x2: "6", y2: "18" }),
+            React__namespace.createElement("line", { x1: "6", y1: "6", x2: "18", y2: "18" })));
+    };
+
+    process.env.NODE_ENV !== "production";
     var SettingsPanel = React__namespace.memo(function SettingsPanel(props) {
+        var _a = React__namespace.useState(true), fixedSidebar = _a[0], setFixedSidebar = _a[1];
         // source is same as in react-admin = path to section of record/object that is edited
         var blockMeta = useBlockInputStore(function (state) {
             var block = state.blocks.find(function (block) { return block.id == state.selected; });
@@ -190,15 +221,7 @@
             return null;
         }, isEqual__default['default']);
         // console.log("SettingsPanel render", blockMeta)
-        return (React__namespace.createElement("aside", { className: clsx__default['default']("bg-gray-50 flex-0 p-2 w-[340px] xl:w-[400px] overflow-auto max-h-[80vh] ") },
-            React__namespace.createElement("header", { className: "text-center mb-4 text-sm" },
-                React__namespace.createElement("h2", null, "\u00DApravy"),
-                dev ? (React__namespace.createElement("p", { className: "text-xs" },
-                    "(", blockMeta === null || blockMeta === void 0 ? void 0 :
-                    blockMeta.type,
-                    "@", blockMeta === null || blockMeta === void 0 ? void 0 :
-                    blockMeta.source,
-                    ")")) : null),
+        return (React__namespace.createElement("aside", { className: clsx__default['default']("bg-gray-50 flex-0 p-2 overflow-auto max-h-[80vh]", fixedSidebar ? "w-[340px] xl:w-[400px]" : "w-0") },
             React__namespace.createElement(reactErrorBoundary.ErrorBoundary, { fallbackRender: function (_a) {
                     var error = _a.error, resetErrorBoundary = _a.resetErrorBoundary;
                     return (React__namespace.createElement("div", { role: "alert" },
@@ -209,7 +232,7 @@
                                 // of the FallbackCallback and onReset props as well.
                                 resetErrorBoundary();
                             } }, "Try again")));
-                } }, blockMeta ? React__namespace.createElement(LazySettings, { blockMeta: blockMeta }) : null)));
+                } }, blockMeta ? (React__namespace.createElement(LazySettings, { blockMeta: blockMeta, setFixedSidebar: setFixedSidebar, fixedSidebar: fixedSidebar })) : null)));
     }, isEqual__default['default']);
     var LazyloadComponent = function (componentPath) {
         return function (props) {
@@ -224,10 +247,47 @@
     };
     var LazySettings = React__namespace.memo(function LazySettings(props) {
         var tools = useBlockInputStore(function (state) { return state.tools; }, isEqual__default['default']);
+        var setSelected = useBlockInputStore(function (state) { return state.setSelected; }, isEqual__default['default']);
+        var handleClose = function () {
+            setSelected(null);
+        };
+        var handleFixedSidebar = function () {
+            props.setFixedSidebar(true);
+        };
+        var handleWindowSidebar = function () {
+            props.setFixedSidebar(false);
+        };
         var Settings = React__namespace.useMemo(function () { var _a; return LazyloadComponent((_a = tools[props.blockMeta.type]) === null || _a === void 0 ? void 0 : _a.Settings); }, [props.blockMeta.id]);
+        var title = React__namespace.useMemo(function () { var _a; return (_a = tools[props.blockMeta.type]) === null || _a === void 0 ? void 0 : _a.title; }, [props.blockMeta.id]);
         // console.log("LazySettings render", props.blockMeta, Settings)
         if (props.blockMeta && Settings) {
-            return (React__namespace.createElement(Settings, { blockID: props.blockMeta.id, source: props.blockMeta.source }));
+            if (props.fixedSidebar) {
+                return (React__namespace.createElement(React__namespace.Fragment, null,
+                    React__namespace.createElement("header", { className: "text-white bg-blue-800 p-1 pl-2 flex-none h-8 flex items-center justify-between" },
+                        React__namespace.createElement("section", { className: "truncate" }, title),
+                        React__namespace.createElement("aside", { className: "flex items-center justify-center" },
+                            React__namespace.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleWindowSidebar },
+                                React__namespace.createElement(ChevronDown, { className: "w-4 text-white transform rotate-90", label: "Move to sidebar" })),
+                            React__namespace.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleClose },
+                                React__namespace.createElement(Close, { className: "w-4 text-white", label: "Close" })))),
+                    React__namespace.createElement("section", { className: "overflow-auto p-2 h-[calc(100%-2rem)]" },
+                        React__namespace.createElement(Settings, { blockID: props.blockMeta.id, source: props.blockMeta.source }))));
+            }
+            return (React__namespace.createElement(reactRnd.Rnd, { className: "flex flex-col border border-gray-300 rounded shadow-lg bg-white z-[99999] overflow-hidden", enableUserSelectHack: false, dragHandleClassName: "dragHandle", minWidth: 300, minHeight: 300, default: {
+                    x: -450,
+                    y: 50,
+                    width: 400,
+                    height: "60vh",
+                } },
+                React__namespace.createElement("header", { className: "text-white bg-blue-800 cursor-move dragHandle p-1 pl-2 flex-none h-8 flex items-center justify-between" },
+                    React__namespace.createElement("section", { className: "truncate" }, title),
+                    React__namespace.createElement("aside", { className: "flex items-center justify-center" },
+                        React__namespace.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleFixedSidebar },
+                            React__namespace.createElement(ChevronDown, { className: "w-4 text-white transform -rotate-90", label: "Move to sidebar" })),
+                        React__namespace.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleClose },
+                            React__namespace.createElement(Close, { className: "w-4 text-white", label: "Close" })))),
+                React__namespace.createElement("section", { className: "overflow-auto p-2 h-[calc(100%-2rem)]" },
+                    React__namespace.createElement(Settings, { blockID: props.blockMeta.id, source: props.blockMeta.source }))));
         }
         return null;
     }, isEqual__default['default']);
@@ -259,31 +319,6 @@
                         : props.name),
                     ((_b = props.block) === null || _b === void 0 ? void 0 : _b.previewImage) ? (React__namespace.createElement("img", { src: props.block.previewImage })) : null));
             })));
-    };
-
-    var ChevronUp = function (props) {
-        return (React__namespace.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "3", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
-            React__namespace.createElement("polyline", { points: "18 15 12 9 6 15" })));
-    };
-    var ChevronDown = function (props) {
-        return (React__namespace.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "3", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
-            React__namespace.createElement("polyline", { points: "6 9 12 15 18 9" })));
-    };
-    var Trash = function (props) {
-        return (React__namespace.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
-            React__namespace.createElement("polyline", { points: "3 6 5 6 21 6" }),
-            React__namespace.createElement("path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" }),
-            React__namespace.createElement("line", { x1: "10", y1: "11", x2: "10", y2: "17" }),
-            React__namespace.createElement("line", { x1: "14", y1: "11", x2: "14", y2: "17" })));
-    };
-    var Move = function (props) {
-        return (React__namespace.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
-            React__namespace.createElement("polyline", { points: "5 9 2 12 5 15" }),
-            React__namespace.createElement("polyline", { points: "9 5 12 2 15 5" }),
-            React__namespace.createElement("polyline", { points: "15 19 12 22 9 19" }),
-            React__namespace.createElement("polyline", { points: "19 9 22 12 19 15" }),
-            React__namespace.createElement("line", { x1: "2", y1: "12", x2: "22", y2: "12" }),
-            React__namespace.createElement("line", { x1: "12", y1: "2", x2: "12", y2: "22" })));
     };
 
     var PagePanel = React__namespace.memo(function PagePanel(props) {

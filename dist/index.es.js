@@ -4,6 +4,7 @@ import isEqual from 'react-fast-compare';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { ErrorBoundary } from 'react-error-boundary';
 import clsx from 'clsx';
+import { Rnd } from 'react-rnd';
 import create from 'zustand';
 import produce from 'immer';
 import { nanoid } from 'nanoid';
@@ -150,8 +151,39 @@ function BlockEditorContext(_a) {
     return React.createElement(context.Provider, { value: useStore }, children);
 }
 
-var dev = process.env.NODE_ENV !== "production";
+var ChevronUp = function (props) {
+    return (React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "3", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
+        React.createElement("polyline", { points: "18 15 12 9 6 15" })));
+};
+var ChevronDown = function (props) {
+    return (React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "3", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
+        React.createElement("polyline", { points: "6 9 12 15 18 9" })));
+};
+var Trash = function (props) {
+    return (React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
+        React.createElement("polyline", { points: "3 6 5 6 21 6" }),
+        React.createElement("path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" }),
+        React.createElement("line", { x1: "10", y1: "11", x2: "10", y2: "17" }),
+        React.createElement("line", { x1: "14", y1: "11", x2: "14", y2: "17" })));
+};
+var Move = function (props) {
+    return (React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
+        React.createElement("polyline", { points: "5 9 2 12 5 15" }),
+        React.createElement("polyline", { points: "9 5 12 2 15 5" }),
+        React.createElement("polyline", { points: "15 19 12 22 9 19" }),
+        React.createElement("polyline", { points: "19 9 22 12 19 15" }),
+        React.createElement("line", { x1: "2", y1: "12", x2: "22", y2: "12" }),
+        React.createElement("line", { x1: "12", y1: "2", x2: "12", y2: "22" })));
+};
+var Close = function (props) {
+    return (React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
+        React.createElement("line", { x1: "18", y1: "6", x2: "6", y2: "18" }),
+        React.createElement("line", { x1: "6", y1: "6", x2: "18", y2: "18" })));
+};
+
+process.env.NODE_ENV !== "production";
 var SettingsPanel = React.memo(function SettingsPanel(props) {
+    var _a = React.useState(true), fixedSidebar = _a[0], setFixedSidebar = _a[1];
     // source is same as in react-admin = path to section of record/object that is edited
     var blockMeta = useBlockInputStore(function (state) {
         var block = state.blocks.find(function (block) { return block.id == state.selected; });
@@ -167,15 +199,7 @@ var SettingsPanel = React.memo(function SettingsPanel(props) {
         return null;
     }, isEqual);
     // console.log("SettingsPanel render", blockMeta)
-    return (React.createElement("aside", { className: clsx("bg-gray-50 flex-0 p-2 w-[340px] xl:w-[400px] overflow-auto max-h-[80vh] ") },
-        React.createElement("header", { className: "text-center mb-4 text-sm" },
-            React.createElement("h2", null, "\u00DApravy"),
-            dev ? (React.createElement("p", { className: "text-xs" },
-                "(", blockMeta === null || blockMeta === void 0 ? void 0 :
-                blockMeta.type,
-                "@", blockMeta === null || blockMeta === void 0 ? void 0 :
-                blockMeta.source,
-                ")")) : null),
+    return (React.createElement("aside", { className: clsx("bg-gray-50 flex-0 p-2 overflow-auto max-h-[80vh]", fixedSidebar ? "w-[340px] xl:w-[400px]" : "w-0") },
         React.createElement(ErrorBoundary, { fallbackRender: function (_a) {
                 var error = _a.error, resetErrorBoundary = _a.resetErrorBoundary;
                 return (React.createElement("div", { role: "alert" },
@@ -186,7 +210,7 @@ var SettingsPanel = React.memo(function SettingsPanel(props) {
                             // of the FallbackCallback and onReset props as well.
                             resetErrorBoundary();
                         } }, "Try again")));
-            } }, blockMeta ? React.createElement(LazySettings, { blockMeta: blockMeta }) : null)));
+            } }, blockMeta ? (React.createElement(LazySettings, { blockMeta: blockMeta, setFixedSidebar: setFixedSidebar, fixedSidebar: fixedSidebar })) : null)));
 }, isEqual);
 var LazyloadComponent = function (componentPath) {
     return function (props) {
@@ -201,10 +225,47 @@ var LazyloadComponent = function (componentPath) {
 };
 var LazySettings = React.memo(function LazySettings(props) {
     var tools = useBlockInputStore(function (state) { return state.tools; }, isEqual);
+    var setSelected = useBlockInputStore(function (state) { return state.setSelected; }, isEqual);
+    var handleClose = function () {
+        setSelected(null);
+    };
+    var handleFixedSidebar = function () {
+        props.setFixedSidebar(true);
+    };
+    var handleWindowSidebar = function () {
+        props.setFixedSidebar(false);
+    };
     var Settings = React.useMemo(function () { var _a; return LazyloadComponent((_a = tools[props.blockMeta.type]) === null || _a === void 0 ? void 0 : _a.Settings); }, [props.blockMeta.id]);
+    var title = React.useMemo(function () { var _a; return (_a = tools[props.blockMeta.type]) === null || _a === void 0 ? void 0 : _a.title; }, [props.blockMeta.id]);
     // console.log("LazySettings render", props.blockMeta, Settings)
     if (props.blockMeta && Settings) {
-        return (React.createElement(Settings, { blockID: props.blockMeta.id, source: props.blockMeta.source }));
+        if (props.fixedSidebar) {
+            return (React.createElement(React.Fragment, null,
+                React.createElement("header", { className: "text-white bg-blue-800 p-1 pl-2 flex-none h-8 flex items-center justify-between" },
+                    React.createElement("section", { className: "truncate" }, title),
+                    React.createElement("aside", { className: "flex items-center justify-center" },
+                        React.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleWindowSidebar },
+                            React.createElement(ChevronDown, { className: "w-4 text-white transform rotate-90", label: "Move to sidebar" })),
+                        React.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleClose },
+                            React.createElement(Close, { className: "w-4 text-white", label: "Close" })))),
+                React.createElement("section", { className: "overflow-auto p-2 h-[calc(100%-2rem)]" },
+                    React.createElement(Settings, { blockID: props.blockMeta.id, source: props.blockMeta.source }))));
+        }
+        return (React.createElement(Rnd, { className: "flex flex-col border border-gray-300 rounded shadow-lg bg-white z-[99999] overflow-hidden", enableUserSelectHack: false, dragHandleClassName: "dragHandle", minWidth: 300, minHeight: 300, default: {
+                x: -450,
+                y: 50,
+                width: 400,
+                height: "60vh",
+            } },
+            React.createElement("header", { className: "text-white bg-blue-800 cursor-move dragHandle p-1 pl-2 flex-none h-8 flex items-center justify-between" },
+                React.createElement("section", { className: "truncate" }, title),
+                React.createElement("aside", { className: "flex items-center justify-center" },
+                    React.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleFixedSidebar },
+                        React.createElement(ChevronDown, { className: "w-4 text-white transform -rotate-90", label: "Move to sidebar" })),
+                    React.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleClose },
+                        React.createElement(Close, { className: "w-4 text-white", label: "Close" })))),
+            React.createElement("section", { className: "overflow-auto p-2 h-[calc(100%-2rem)]" },
+                React.createElement(Settings, { blockID: props.blockMeta.id, source: props.blockMeta.source }))));
     }
     return null;
 }, isEqual);
@@ -236,31 +297,6 @@ var ToolsItem = function (props) {
                     : props.name),
                 ((_b = props.block) === null || _b === void 0 ? void 0 : _b.previewImage) ? (React.createElement("img", { src: props.block.previewImage })) : null));
         })));
-};
-
-var ChevronUp = function (props) {
-    return (React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "3", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
-        React.createElement("polyline", { points: "18 15 12 9 6 15" })));
-};
-var ChevronDown = function (props) {
-    return (React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "3", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
-        React.createElement("polyline", { points: "6 9 12 15 18 9" })));
-};
-var Trash = function (props) {
-    return (React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
-        React.createElement("polyline", { points: "3 6 5 6 21 6" }),
-        React.createElement("path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" }),
-        React.createElement("line", { x1: "10", y1: "11", x2: "10", y2: "17" }),
-        React.createElement("line", { x1: "14", y1: "11", x2: "14", y2: "17" })));
-};
-var Move = function (props) {
-    return (React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
-        React.createElement("polyline", { points: "5 9 2 12 5 15" }),
-        React.createElement("polyline", { points: "9 5 12 2 15 5" }),
-        React.createElement("polyline", { points: "15 19 12 22 9 19" }),
-        React.createElement("polyline", { points: "19 9 22 12 19 15" }),
-        React.createElement("line", { x1: "2", y1: "12", x2: "22", y2: "12" }),
-        React.createElement("line", { x1: "12", y1: "2", x2: "12", y2: "22" })));
 };
 
 var PagePanel = React.memo(function PagePanel(props) {
