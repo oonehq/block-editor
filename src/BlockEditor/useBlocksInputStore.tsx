@@ -69,6 +69,7 @@ const store = (set, get) => ({
                 id: nanoid(),
                 type: blockType,
                 data: get().tools[blockType].defaultData,
+                _$settings: get().tools[blockType].defaultData,
                 version: get().tools[blockType].version,
             })
         })

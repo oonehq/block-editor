@@ -8,6 +8,7 @@ import { Rnd } from 'react-rnd';
 import create from 'zustand';
 import produce from 'immer';
 import { nanoid } from 'nanoid';
+import { persist } from 'zustand/middleware';
 import deepCopy from 'deep-copy';
 import { useForm, FormProvider, useWatch, useFormContext, useController, useFieldArray } from 'react-hook-form';
 import ReactQuill from 'react-quill';
@@ -56,7 +57,7 @@ function __spreadArray(to, from) {
     return to;
 }
 
-var defaultState = {
+var defaultState$1 = {
     time: Date.now(),
     selected: null,
     tools: {},
@@ -65,7 +66,7 @@ var defaultState = {
     toolbarOpen: false,
     blocks: [],
 };
-var store = function (set, get) { return (__assign(__assign({}, defaultState), { init: function (source, tools, onChange) {
+var store$1 = function (set, get) { return (__assign(__assign({}, defaultState$1), { init: function (source, tools, onChange) {
         // console.log("init", value, tools)
         get().update(function (state) {
             if (source) {
@@ -109,6 +110,7 @@ var store = function (set, get) { return (__assign(__assign({}, defaultState), {
                 id: nanoid(),
                 type: blockType,
                 data: get().tools[blockType].defaultData,
+                _$settings: get().tools[blockType].defaultData,
                 version: get().tools[blockType].version,
             });
         });
@@ -134,8 +136,8 @@ var store = function (set, get) { return (__assign(__assign({}, defaultState), {
             state.toolbarOpen = value;
         });
     }, update: function (fn) { return set(produce(fn)); } })); };
-var useBlockInputStore$1 = create(store);
-var blockEditorStore = store;
+var useBlockInputStore$1 = create(store$1);
+var blockEditorStore = store$1;
 
 var context = React.createContext(null);
 var useBlockInputStore = function () {
@@ -181,9 +183,22 @@ var Close = function (props) {
         React.createElement("line", { x1: "6", y1: "6", x2: "18", y2: "18" })));
 };
 
+var defaultState = {
+    fixedSettingsPanel: false,
+};
+var store = function (set, get) { return (__assign(__assign({}, defaultState), { setFixedSettingsPanel: function (value) {
+        get().update(function (state) {
+            state.fixedSettingsPanel = value;
+        });
+    }, update: function (fn) { return set(produce(fn)); } })); };
+var useBlockEditorStore = create(persist(store, {
+    name: "blockEditorStore",
+    version: 1,
+}));
+
 process.env.NODE_ENV !== "production";
 var SettingsPanel = React.memo(function SettingsPanel(props) {
-    var _a = React.useState(true), fixedSidebar = _a[0], setFixedSidebar = _a[1];
+    var _a = useBlockEditorStore(function (state) { return [state.fixedSettingsPanel, state.setFixedSettingsPanel]; }), fixedSettingsPanel = _a[0], setFixedSettingsPanel = _a[1];
     // source is same as in react-admin = path to section of record/object that is edited
     var blockMeta = useBlockInputStore(function (state) {
         var block = state.blocks.find(function (block) { return block.id == state.selected; });
@@ -193,25 +208,61 @@ var SettingsPanel = React.memo(function SettingsPanel(props) {
                 id: block.id,
                 type: block.type,
                 version: block.version,
-                source: state.source + "[" + blockIndex + "].data",
+                source: state.source + "[" + blockIndex + "]._$settings",
             };
         }
         return null;
     }, isEqual);
+    var _b = useBlockInputStore(function (state) { return [state.setSelected, state.tools]; }, isEqual), setSelected = _b[0], tools = _b[1];
+    var handleClose = function (e) {
+        setSelected(null);
+        e.preventDefault();
+    };
+    var handleToggleFixedSidebar = function () {
+        setFixedSettingsPanel(!fixedSettingsPanel);
+    };
+    var title = React.useMemo(function () {
+        var _a;
+        if (!blockMeta)
+            return null;
+        return (_a = tools[blockMeta.type]) === null || _a === void 0 ? void 0 : _a.title;
+    }, [blockMeta === null || blockMeta === void 0 ? void 0 : blockMeta.type]);
     // console.log("SettingsPanel render", blockMeta)
-    return (React.createElement("aside", { className: clsx("bg-gray-50 flex-0 p-2 overflow-auto max-h-[80vh]", fixedSidebar ? "w-[340px] xl:w-[400px]" : "w-0") },
-        React.createElement(ErrorBoundary, { fallbackRender: function (_a) {
-                var error = _a.error, resetErrorBoundary = _a.resetErrorBoundary;
-                return (React.createElement("div", { role: "alert" },
-                    React.createElement("div", null, "Oh no"),
-                    React.createElement("div", null, error.message),
-                    React.createElement("button", { className: "btn", onClick: function () {
-                            // though you could accomplish this with a combination
-                            // of the FallbackCallback and onReset props as well.
-                            resetErrorBoundary();
-                        } }, "Try again")));
-            } }, blockMeta ? (React.createElement(LazySettings, { blockMeta: blockMeta, setFixedSidebar: setFixedSidebar, fixedSidebar: fixedSidebar })) : null)));
+    return (React.createElement("aside", { className: clsx("bg-gray-50 flex-0 p-2 overflow-auto max-h-[80vh]", fixedSettingsPanel ? "w-[340px] xl:w-[400px]" : "w-0") }, blockMeta ? (React.createElement(SettingsWrapper, null,
+        React.createElement("header", { className: "text-white bg-blue-800 cursor-move dragHandle p-1 pl-2 flex-none h-8 flex items-center justify-between" },
+            React.createElement("section", { className: "truncate" }, title !== null && title !== void 0 ? title : "Nastavení stránky"),
+            React.createElement("aside", { className: "flex items-center justify-center" },
+                React.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleToggleFixedSidebar },
+                    React.createElement(ChevronDown, { className: clsx("w-4 text-white transform", fixedSettingsPanel
+                            ? "rotate-90"
+                            : "-rotate-90"), label: "Move to sidebar" })),
+                React.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleClose },
+                    React.createElement(Close, { className: "w-4 text-white", label: "Close" })))),
+        React.createElement("section", { className: "overflow-auto p-2 h-[calc(100%-2rem)] bg-gray-50" },
+            React.createElement(ErrorBoundary, { fallbackRender: function (_a) {
+                    var error = _a.error, resetErrorBoundary = _a.resetErrorBoundary;
+                    return (React.createElement("div", { role: "alert" },
+                        React.createElement("div", null, "Oh no"),
+                        React.createElement("div", null, error.message),
+                        React.createElement("button", { className: "btn", onClick: function () {
+                                resetErrorBoundary();
+                            } }, "Try again")));
+                } }, blockMeta ? (React.createElement(LazySettings, { blockMeta: blockMeta })) : null)))) : null));
 }, isEqual);
+var SettingsWrapper = React.memo(function (props) {
+    var fixedSettingsPanel = useBlockEditorStore(function (state) { return [
+        state.fixedSettingsPanel,
+    ]; })[0];
+    if (fixedSettingsPanel) {
+        return React.createElement(React.Fragment, null, props.children);
+    }
+    return (React.createElement(Rnd, { className: "flex flex-col border border-gray-300 rounded shadow-lg bg-white z-[99999] overflow-hidden", enableUserSelectHack: false, dragHandleClassName: "dragHandle", minWidth: 300, minHeight: 300, default: {
+            x: -450,
+            y: 50,
+            width: 400,
+            height: "60vh",
+        } }, props.children));
+});
 var LazyloadComponent = function (componentPath) {
     return function (props) {
         // console.log("LazyloadComponent", componentPath)
@@ -225,47 +276,12 @@ var LazyloadComponent = function (componentPath) {
 };
 var LazySettings = React.memo(function LazySettings(props) {
     var tools = useBlockInputStore(function (state) { return state.tools; }, isEqual);
-    var setSelected = useBlockInputStore(function (state) { return state.setSelected; }, isEqual);
-    var handleClose = function () {
-        setSelected(null);
-    };
-    var handleFixedSidebar = function () {
-        props.setFixedSidebar(true);
-    };
-    var handleWindowSidebar = function () {
-        props.setFixedSidebar(false);
-    };
     var Settings = React.useMemo(function () { var _a; return LazyloadComponent((_a = tools[props.blockMeta.type]) === null || _a === void 0 ? void 0 : _a.Settings); }, [props.blockMeta.id]);
-    var title = React.useMemo(function () { var _a; return (_a = tools[props.blockMeta.type]) === null || _a === void 0 ? void 0 : _a.title; }, [props.blockMeta.id]);
     // console.log("LazySettings render", props.blockMeta, Settings)
     if (props.blockMeta && Settings) {
-        if (props.fixedSidebar) {
-            return (React.createElement(React.Fragment, null,
-                React.createElement("header", { className: "text-white bg-blue-800 p-1 pl-2 flex-none h-8 flex items-center justify-between" },
-                    React.createElement("section", { className: "truncate" }, title),
-                    React.createElement("aside", { className: "flex items-center justify-center" },
-                        React.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleWindowSidebar },
-                            React.createElement(ChevronDown, { className: "w-4 text-white transform rotate-90", label: "Move to sidebar" })),
-                        React.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleClose },
-                            React.createElement(Close, { className: "w-4 text-white", label: "Close" })))),
-                React.createElement("section", { className: "overflow-auto p-2 h-[calc(100%-2rem)]" },
-                    React.createElement(Settings, { blockID: props.blockMeta.id, source: props.blockMeta.source }))));
-        }
-        return (React.createElement(Rnd, { className: "flex flex-col border border-gray-300 rounded shadow-lg bg-white z-[99999] overflow-hidden", enableUserSelectHack: false, dragHandleClassName: "dragHandle", minWidth: 300, minHeight: 300, default: {
-                x: -450,
-                y: 50,
-                width: 400,
-                height: "60vh",
-            } },
-            React.createElement("header", { className: "text-white bg-blue-800 cursor-move dragHandle p-1 pl-2 flex-none h-8 flex items-center justify-between" },
-                React.createElement("section", { className: "truncate" }, title),
-                React.createElement("aside", { className: "flex items-center justify-center" },
-                    React.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleFixedSidebar },
-                        React.createElement(ChevronDown, { className: "w-4 text-white transform -rotate-90", label: "Move to sidebar" })),
-                    React.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleClose },
-                        React.createElement(Close, { className: "w-4 text-white", label: "Close" })))),
-            React.createElement("section", { className: "overflow-auto p-2 h-[calc(100%-2rem)]" },
-                React.createElement(Settings, { blockID: props.blockMeta.id, source: props.blockMeta.source }))));
+        return (React.createElement(Settings, { blockID: props.blockMeta.id, source: props.blockMeta.source, getSource: function (scopedSource) {
+                return props.blockMeta.source + "." + scopedSource;
+            } }));
     }
     return null;
 }, isEqual);
@@ -361,7 +377,7 @@ var PageBlock = React.memo(function PageBlock(props) {
         e.stopPropagation();
     };
     var Block = (_b = (_a = tools[props.block.type]) === null || _a === void 0 ? void 0 : _a.Component) !== null && _b !== void 0 ? _b : MissingBlock;
-    // console.log("PageBlock render", blockProps)
+    console.log("PageBlock render", blockProps);
     return (React.createElement(Draggable, { draggableId: props.block.id, index: props.index }, function (provided, snapshot) { return (React.createElement("section", __assign({ ref: provided.innerRef }, provided.draggableProps, { className: clsx("relative", isSelected
             ? "ring ring-yellow-300"
             : "hover:ring ring-yellow-300"), onClick: handleClick }),

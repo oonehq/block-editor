@@ -1,8 +1,8 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('react'), require('react-beautiful-dnd'), require('react-fast-compare'), require('react-hotkeys-hook'), require('react-error-boundary'), require('clsx'), require('react-rnd'), require('zustand'), require('immer'), require('nanoid'), require('deep-copy'), require('react-hook-form'), require('react-quill')) :
-    typeof define === 'function' && define.amd ? define(['exports', 'react', 'react-beautiful-dnd', 'react-fast-compare', 'react-hotkeys-hook', 'react-error-boundary', 'clsx', 'react-rnd', 'zustand', 'immer', 'nanoid', 'deep-copy', 'react-hook-form', 'react-quill'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.BlockEditor = {}, global.React, global.reactBeautifulDnd, global.isEqual, global.reactHotkeysHook, global.reactErrorBoundary, global.clsx, global.reactRnd, global.create, global.produce, global.nanoid, global.deepCopy, global.reactHookForm, global.ReactQuill));
-}(this, (function (exports, React, reactBeautifulDnd, isEqual, reactHotkeysHook, reactErrorBoundary, clsx, reactRnd, create, produce, nanoid, deepCopy, reactHookForm, ReactQuill) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('react'), require('react-beautiful-dnd'), require('react-fast-compare'), require('react-hotkeys-hook'), require('react-error-boundary'), require('clsx'), require('react-rnd'), require('zustand'), require('immer'), require('nanoid'), require('zustand/middleware'), require('deep-copy'), require('react-hook-form'), require('react-quill')) :
+    typeof define === 'function' && define.amd ? define(['exports', 'react', 'react-beautiful-dnd', 'react-fast-compare', 'react-hotkeys-hook', 'react-error-boundary', 'clsx', 'react-rnd', 'zustand', 'immer', 'nanoid', 'zustand/middleware', 'deep-copy', 'react-hook-form', 'react-quill'], factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.BlockEditor = {}, global.React, global.reactBeautifulDnd, global.isEqual, global.reactHotkeysHook, global.reactErrorBoundary, global.clsx, global.reactRnd, global.create, global.produce, global.nanoid, global.middleware, global.deepCopy, global.reactHookForm, global.ReactQuill));
+}(this, (function (exports, React, reactBeautifulDnd, isEqual, reactHotkeysHook, reactErrorBoundary, clsx, reactRnd, create, produce, nanoid, middleware, deepCopy, reactHookForm, ReactQuill) { 'use strict';
 
     function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -78,7 +78,7 @@
         return to;
     }
 
-    var defaultState = {
+    var defaultState$1 = {
         time: Date.now(),
         selected: null,
         tools: {},
@@ -87,7 +87,7 @@
         toolbarOpen: false,
         blocks: [],
     };
-    var store = function (set, get) { return (__assign(__assign({}, defaultState), { init: function (source, tools, onChange) {
+    var store$1 = function (set, get) { return (__assign(__assign({}, defaultState$1), { init: function (source, tools, onChange) {
             // console.log("init", value, tools)
             get().update(function (state) {
                 if (source) {
@@ -131,6 +131,7 @@
                     id: nanoid.nanoid(),
                     type: blockType,
                     data: get().tools[blockType].defaultData,
+                    _$settings: get().tools[blockType].defaultData,
                     version: get().tools[blockType].version,
                 });
             });
@@ -156,8 +157,8 @@
                 state.toolbarOpen = value;
             });
         }, update: function (fn) { return set(produce__default['default'](fn)); } })); };
-    var useBlockInputStore$1 = create__default['default'](store);
-    var blockEditorStore = store;
+    var useBlockInputStore$1 = create__default['default'](store$1);
+    var blockEditorStore = store$1;
 
     var context = React__namespace.createContext(null);
     var useBlockInputStore = function () {
@@ -203,9 +204,22 @@
             React__namespace.createElement("line", { x1: "6", y1: "6", x2: "18", y2: "18" })));
     };
 
+    var defaultState = {
+        fixedSettingsPanel: false,
+    };
+    var store = function (set, get) { return (__assign(__assign({}, defaultState), { setFixedSettingsPanel: function (value) {
+            get().update(function (state) {
+                state.fixedSettingsPanel = value;
+            });
+        }, update: function (fn) { return set(produce__default['default'](fn)); } })); };
+    var useBlockEditorStore = create__default['default'](middleware.persist(store, {
+        name: "blockEditorStore",
+        version: 1,
+    }));
+
     process.env.NODE_ENV !== "production";
     var SettingsPanel = React__namespace.memo(function SettingsPanel(props) {
-        var _a = React__namespace.useState(true), fixedSidebar = _a[0], setFixedSidebar = _a[1];
+        var _a = useBlockEditorStore(function (state) { return [state.fixedSettingsPanel, state.setFixedSettingsPanel]; }), fixedSettingsPanel = _a[0], setFixedSettingsPanel = _a[1];
         // source is same as in react-admin = path to section of record/object that is edited
         var blockMeta = useBlockInputStore(function (state) {
             var block = state.blocks.find(function (block) { return block.id == state.selected; });
@@ -215,25 +229,61 @@
                     id: block.id,
                     type: block.type,
                     version: block.version,
-                    source: state.source + "[" + blockIndex + "].data",
+                    source: state.source + "[" + blockIndex + "]._$settings",
                 };
             }
             return null;
         }, isEqual__default['default']);
+        var _b = useBlockInputStore(function (state) { return [state.setSelected, state.tools]; }, isEqual__default['default']), setSelected = _b[0], tools = _b[1];
+        var handleClose = function (e) {
+            setSelected(null);
+            e.preventDefault();
+        };
+        var handleToggleFixedSidebar = function () {
+            setFixedSettingsPanel(!fixedSettingsPanel);
+        };
+        var title = React__namespace.useMemo(function () {
+            var _a;
+            if (!blockMeta)
+                return null;
+            return (_a = tools[blockMeta.type]) === null || _a === void 0 ? void 0 : _a.title;
+        }, [blockMeta === null || blockMeta === void 0 ? void 0 : blockMeta.type]);
         // console.log("SettingsPanel render", blockMeta)
-        return (React__namespace.createElement("aside", { className: clsx__default['default']("bg-gray-50 flex-0 p-2 overflow-auto max-h-[80vh]", fixedSidebar ? "w-[340px] xl:w-[400px]" : "w-0") },
-            React__namespace.createElement(reactErrorBoundary.ErrorBoundary, { fallbackRender: function (_a) {
-                    var error = _a.error, resetErrorBoundary = _a.resetErrorBoundary;
-                    return (React__namespace.createElement("div", { role: "alert" },
-                        React__namespace.createElement("div", null, "Oh no"),
-                        React__namespace.createElement("div", null, error.message),
-                        React__namespace.createElement("button", { className: "btn", onClick: function () {
-                                // though you could accomplish this with a combination
-                                // of the FallbackCallback and onReset props as well.
-                                resetErrorBoundary();
-                            } }, "Try again")));
-                } }, blockMeta ? (React__namespace.createElement(LazySettings, { blockMeta: blockMeta, setFixedSidebar: setFixedSidebar, fixedSidebar: fixedSidebar })) : null)));
+        return (React__namespace.createElement("aside", { className: clsx__default['default']("bg-gray-50 flex-0 p-2 overflow-auto max-h-[80vh]", fixedSettingsPanel ? "w-[340px] xl:w-[400px]" : "w-0") }, blockMeta ? (React__namespace.createElement(SettingsWrapper, null,
+            React__namespace.createElement("header", { className: "text-white bg-blue-800 cursor-move dragHandle p-1 pl-2 flex-none h-8 flex items-center justify-between" },
+                React__namespace.createElement("section", { className: "truncate" }, title !== null && title !== void 0 ? title : "Nastavení stránky"),
+                React__namespace.createElement("aside", { className: "flex items-center justify-center" },
+                    React__namespace.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleToggleFixedSidebar },
+                        React__namespace.createElement(ChevronDown, { className: clsx__default['default']("w-4 text-white transform", fixedSettingsPanel
+                                ? "rotate-90"
+                                : "-rotate-90"), label: "Move to sidebar" })),
+                    React__namespace.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleClose },
+                        React__namespace.createElement(Close, { className: "w-4 text-white", label: "Close" })))),
+            React__namespace.createElement("section", { className: "overflow-auto p-2 h-[calc(100%-2rem)] bg-gray-50" },
+                React__namespace.createElement(reactErrorBoundary.ErrorBoundary, { fallbackRender: function (_a) {
+                        var error = _a.error, resetErrorBoundary = _a.resetErrorBoundary;
+                        return (React__namespace.createElement("div", { role: "alert" },
+                            React__namespace.createElement("div", null, "Oh no"),
+                            React__namespace.createElement("div", null, error.message),
+                            React__namespace.createElement("button", { className: "btn", onClick: function () {
+                                    resetErrorBoundary();
+                                } }, "Try again")));
+                    } }, blockMeta ? (React__namespace.createElement(LazySettings, { blockMeta: blockMeta })) : null)))) : null));
     }, isEqual__default['default']);
+    var SettingsWrapper = React__namespace.memo(function (props) {
+        var fixedSettingsPanel = useBlockEditorStore(function (state) { return [
+            state.fixedSettingsPanel,
+        ]; })[0];
+        if (fixedSettingsPanel) {
+            return React__namespace.createElement(React__namespace.Fragment, null, props.children);
+        }
+        return (React__namespace.createElement(reactRnd.Rnd, { className: "flex flex-col border border-gray-300 rounded shadow-lg bg-white z-[99999] overflow-hidden", enableUserSelectHack: false, dragHandleClassName: "dragHandle", minWidth: 300, minHeight: 300, default: {
+                x: -450,
+                y: 50,
+                width: 400,
+                height: "60vh",
+            } }, props.children));
+    });
     var LazyloadComponent = function (componentPath) {
         return function (props) {
             // console.log("LazyloadComponent", componentPath)
@@ -247,47 +297,12 @@
     };
     var LazySettings = React__namespace.memo(function LazySettings(props) {
         var tools = useBlockInputStore(function (state) { return state.tools; }, isEqual__default['default']);
-        var setSelected = useBlockInputStore(function (state) { return state.setSelected; }, isEqual__default['default']);
-        var handleClose = function () {
-            setSelected(null);
-        };
-        var handleFixedSidebar = function () {
-            props.setFixedSidebar(true);
-        };
-        var handleWindowSidebar = function () {
-            props.setFixedSidebar(false);
-        };
         var Settings = React__namespace.useMemo(function () { var _a; return LazyloadComponent((_a = tools[props.blockMeta.type]) === null || _a === void 0 ? void 0 : _a.Settings); }, [props.blockMeta.id]);
-        var title = React__namespace.useMemo(function () { var _a; return (_a = tools[props.blockMeta.type]) === null || _a === void 0 ? void 0 : _a.title; }, [props.blockMeta.id]);
         // console.log("LazySettings render", props.blockMeta, Settings)
         if (props.blockMeta && Settings) {
-            if (props.fixedSidebar) {
-                return (React__namespace.createElement(React__namespace.Fragment, null,
-                    React__namespace.createElement("header", { className: "text-white bg-blue-800 p-1 pl-2 flex-none h-8 flex items-center justify-between" },
-                        React__namespace.createElement("section", { className: "truncate" }, title),
-                        React__namespace.createElement("aside", { className: "flex items-center justify-center" },
-                            React__namespace.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleWindowSidebar },
-                                React__namespace.createElement(ChevronDown, { className: "w-4 text-white transform rotate-90", label: "Move to sidebar" })),
-                            React__namespace.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleClose },
-                                React__namespace.createElement(Close, { className: "w-4 text-white", label: "Close" })))),
-                    React__namespace.createElement("section", { className: "overflow-auto p-2 h-[calc(100%-2rem)]" },
-                        React__namespace.createElement(Settings, { blockID: props.blockMeta.id, source: props.blockMeta.source }))));
-            }
-            return (React__namespace.createElement(reactRnd.Rnd, { className: "flex flex-col border border-gray-300 rounded shadow-lg bg-white z-[99999] overflow-hidden", enableUserSelectHack: false, dragHandleClassName: "dragHandle", minWidth: 300, minHeight: 300, default: {
-                    x: -450,
-                    y: 50,
-                    width: 400,
-                    height: "60vh",
-                } },
-                React__namespace.createElement("header", { className: "text-white bg-blue-800 cursor-move dragHandle p-1 pl-2 flex-none h-8 flex items-center justify-between" },
-                    React__namespace.createElement("section", { className: "truncate" }, title),
-                    React__namespace.createElement("aside", { className: "flex items-center justify-center" },
-                        React__namespace.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleFixedSidebar },
-                            React__namespace.createElement(ChevronDown, { className: "w-4 text-white transform -rotate-90", label: "Move to sidebar" })),
-                        React__namespace.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleClose },
-                            React__namespace.createElement(Close, { className: "w-4 text-white", label: "Close" })))),
-                React__namespace.createElement("section", { className: "overflow-auto p-2 h-[calc(100%-2rem)]" },
-                    React__namespace.createElement(Settings, { blockID: props.blockMeta.id, source: props.blockMeta.source }))));
+            return (React__namespace.createElement(Settings, { blockID: props.blockMeta.id, source: props.blockMeta.source, getSource: function (scopedSource) {
+                    return props.blockMeta.source + "." + scopedSource;
+                } }));
         }
         return null;
     }, isEqual__default['default']);
@@ -383,7 +398,7 @@
             e.stopPropagation();
         };
         var Block = (_b = (_a = tools[props.block.type]) === null || _a === void 0 ? void 0 : _a.Component) !== null && _b !== void 0 ? _b : MissingBlock;
-        // console.log("PageBlock render", blockProps)
+        console.log("PageBlock render", blockProps);
         return (React__namespace.createElement(reactBeautifulDnd.Draggable, { draggableId: props.block.id, index: props.index }, function (provided, snapshot) { return (React__namespace.createElement("section", __assign({ ref: provided.innerRef }, provided.draggableProps, { className: clsx__default['default']("relative", isSelected
                 ? "ring ring-yellow-300"
                 : "hover:ring ring-yellow-300"), onClick: handleClick }),

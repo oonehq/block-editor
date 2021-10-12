@@ -117,7 +117,7 @@ const PageBlock = React.memo(function PageBlock(props: any) {
 
     const Block = tools[props.block.type]?.Component ?? MissingBlock
 
-    // console.log("PageBlock render", blockProps)
+    console.log("PageBlock render", blockProps)
 
     return (
         <Draggable draggableId={props.block.id} index={props.index}>
