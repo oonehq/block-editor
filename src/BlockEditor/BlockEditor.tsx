@@ -1,5 +1,6 @@
 import * as React from "react"
 import clsx from "clsx"
+import throttle from "lodash/throttle"
 
 import { DragDropContext } from "react-beautiful-dnd"
 // import { useBlockInputStore } from "./useBlocksInputStore"
@@ -51,6 +52,51 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
         ],
         isEqual
     )
+
+    // const highlightRef = React.useRef<any>(null)
+
+    // const mouseMove = (e) => {
+    //     if (e.target === highlightRef.current) {
+    //         console.log("move to highlight")
+    //         return
+    //     }
+    //     const targetBB = e.target.getBoundingClientRect()
+    //     console.log("move", e, targetBB)
+    //     highlightRef.current.style.position = "absolute"
+    //     highlightRef.current.style.zIndex = 99999
+    //     highlightRef.current.style.width = `${targetBB.width}px`
+    //     highlightRef.current.style.height = `${targetBB.height}px`
+    //     highlightRef.current.style.border = "1px deeppink dashed"
+    //     // highlightRef.current.style.backgroundColor = "red"
+    //     // highlightRef.current.style.opacity = 0.1
+    //     highlightRef.current.style.top = `${targetBB.top + window.scrollY}px`
+    //     highlightRef.current.style.left = `${targetBB.left + window.scrollX}px`
+    //     highlightRef.current.style.userSelect = `none`
+    //     highlightRef.current.style.pointerEvents = `none`
+    //     highlightRef.current.style.transition = `all 300ms`
+    // }
+
+    // const handleMouseMove = useThrottle(mouseMove, 200)
+
+    // React.useEffect(() => {
+    //     if (!document.getElementById("highlight")) {
+    //         const highlightNode = document.createElement("aside")
+    //         highlightNode.setAttribute("id", "highlight")
+    //         document.body.appendChild(highlightNode)
+    //         highlightRef.current = highlightNode
+    //     } else {
+    //         highlightRef.current = document.getElementById("highlight")
+    //     }
+
+    //     if (props.source?.includes(".cs")) {
+    //         document.addEventListener("mousemove", handleMouseMove)
+    //     }
+
+    //     return () => {
+    //         document.removeEventListener("mousemove", handleMouseMove)
+    //         highlightRef.current.remove()
+    //     }
+    // }, [])
 
     React.useEffect(() => {
         initBlocks(props.source, props.tools, props.onChange)
@@ -131,3 +177,16 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
     )
 },
 isEqual)
+
+const useThrottle = (cb, delay) => {
+    const options = { leading: true, trailing: true } // add custom lodash options
+    const cbRef = React.useRef(cb)
+    // use mutable ref to make useCallback/throttle not depend on `cb` dep
+    React.useEffect(() => {
+        cbRef.current = cb
+    })
+    return React.useCallback(
+        throttle((...args) => cbRef.current(...args), delay, options),
+        [delay]
+    )
+}

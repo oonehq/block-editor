@@ -1,4 +1,5 @@
 import * as React from 'react';
+import 'lodash/throttle';
 import { Droppable, Draggable, DragDropContext } from 'react-beautiful-dnd';
 import isEqual from 'react-fast-compare';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -182,6 +183,11 @@ var Close = function (props) {
         React.createElement("line", { x1: "18", y1: "6", x2: "6", y2: "18" }),
         React.createElement("line", { x1: "6", y1: "6", x2: "18", y2: "18" })));
 };
+var Search = function (props) {
+    return (React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: props.className },
+        React.createElement("circle", { cx: "11", cy: "11", r: "8" }),
+        React.createElement("line", { x1: "21", y1: "21", x2: "16.65", y2: "16.65" })));
+};
 
 var defaultState = {
     fixedSettingsPanel: false,
@@ -286,22 +292,52 @@ var LazySettings = React.memo(function LazySettings(props) {
     return null;
 }, isEqual);
 
+var useClickOutside = function (ref, handler) {
+    React.useEffect(function () {
+        var listener = function (event) {
+            // Do nothing if clicking ref's element or descendent elements
+            if (!ref.current || ref.current.contains(event.target)) {
+                return;
+            }
+            handler(event);
+        };
+        document.addEventListener("mousedown", listener);
+        document.addEventListener("touchstart", listener);
+        return function () {
+            document.removeEventListener("mousedown", listener);
+            document.removeEventListener("touchstart", listener);
+        };
+    }, 
+    // Add ref and handler to effect dependencies
+    // It's worth noting that because passed in handler is a new ...
+    // ... function on every render that will cause this effect ...
+    // ... callback/cleanup to run every render. It's not a big deal ...
+    // ... but to optimize you can wrap handler in useCallback before ...
+    // ... passing it into this hook.
+    [ref, handler]);
+};
+
 var ToolsPanel = React.memo(function ToolsPanel(props) {
-    var _a = useBlockInputStore(function (state) { return [state.setToolbarOpen, state.toolbarOpen, state.tools]; }, isEqual), setToolbarOpen = _a[0], toolbarOpen = _a[1], tools = _a[2];
-    var handleClickOutside = function () {
-        setToolbarOpen(false);
-    };
-    // console.log("ToolsPanel render", tools)
-    return (React.createElement("aside", { className: clsx("top-0 w-48 bg-gray-100 py-2 absolute h-full overflow-auto ease-in-out transition-all duration-300 z-[99999]", toolbarOpen ? "left-0" : "-left-48"), onClick: handleClickOutside },
+    var _a = useBlockInputStore(function (state) { return [state.toolbarOpen, state.tools]; }, isEqual), toolbarOpen = _a[0], tools = _a[1];
+    return (React.createElement("aside", { className: clsx("top-0 w-48 bg-gray-100 py-2 absolute h-full overflow-auto ease-in-out transition-all duration-300 z-[99999]", toolbarOpen ? "left-0" : "-left-48") },
         React.createElement("header", { className: "text-center text-sm group-hover:underline" }, "Bloky"),
-        React.createElement(Droppable, { droppableId: "sidebar" }, function (provided, snapshot) { return (React.createElement("section", __assign({ ref: provided.innerRef }, provided.droppableProps),
-            tools
-                ? Object.keys(tools).map(function (name, index) {
-                    return (React.createElement(ToolsItem, { name: name, index: index, block: tools[name], key: name + "-" + index }));
-                })
-                : null,
-            provided.placeholder)); })));
+        React.createElement(ToolsListWithFilter, { tools: tools })));
 });
+var ToolsListWithFilter = function (props) {
+    var _a = React.useState("projektovy dluhopis"), selectedTag = _a[0], setSelectedTag = _a[1];
+    return (React.createElement("section", null,
+        React.createElement(TagFilter, { tools: props.tools, selectedTag: selectedTag, setSelectedTag: setSelectedTag }),
+        React.createElement(Droppable, { droppableId: "sidebar" }, function (provided, snapshot) { return (React.createElement("section", __assign({ ref: provided.innerRef }, provided.droppableProps), props.tools
+            ? Object.keys(props.tools).map(function (name, index) {
+                if (selectedTag.length > 0 &&
+                    Array.isArray(props.tools[name].tags) &&
+                    !props.tools[name].tags.includes(selectedTag)) {
+                    return null;
+                }
+                return (React.createElement(ToolsItem, { name: name, index: index, block: props.tools[name], key: name + "-" + index }));
+            })
+            : null)); })));
+};
 var ToolsItem = function (props) {
     // console.log("ToolsItem render")
     return (React.createElement("article", { className: "m-4" },
@@ -313,6 +349,65 @@ var ToolsItem = function (props) {
                     : props.name),
                 ((_b = props.block) === null || _b === void 0 ? void 0 : _b.previewImage) ? (React.createElement("img", { src: props.block.previewImage })) : null));
         })));
+};
+var TagFilter = function (props) {
+    var _a = React.useState(false), inputActive = _a[0], setInputActive = _a[1];
+    var _b = React.useState([]), tags = _b[0], setTags = _b[1];
+    var ref = React.useRef(null);
+    useClickOutside(ref, function () { return (inputActive ? setInputActive(false) : null); });
+    React.useEffect(function () {
+        var tags = Object.keys(props.tools).reduce(function (result, toolName) {
+            var tool = props.tools[toolName];
+            if (tool && tool.tags && Array.isArray(tool.tags)) {
+                tool.tags.forEach(function (tag) {
+                    if (!result.includes(tag)) {
+                        result.push(tag);
+                    }
+                });
+            }
+            return result;
+        }, []);
+        setTags(tags);
+    }, [props.tools]);
+    var prevent = function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+    var handleFocus = function (e) {
+        prevent(e);
+        setInputActive(true);
+    };
+    var handleSelected = function (e) {
+        console.log("handleSelected", e.currentTarget.getAttribute("data-tag"));
+        prevent(e);
+        var nextTag = e.currentTarget.getAttribute("data-tag");
+        if (nextTag === props.selectedTag) {
+            props.setSelectedTag("");
+        }
+        else {
+            props.setSelectedTag(nextTag);
+        }
+        setInputActive(false);
+    };
+    return (React.createElement("aside", { className: "px-2" },
+        React.createElement("header", { className: "flex items-center overflow-hidden" },
+            React.createElement("button", { onClick: handleFocus, className: "btn btn-xs btn-outline border-none m-0.5 italic opacity-75 flex-none" },
+                React.createElement(Search, { className: "w-4 h-4" }),
+                !props.selectedTag ? (React.createElement("span", { className: "ml-1" }, "Filtrovat")) : null),
+            props.selectedTag ? (React.createElement(TagButton, { tag: props.selectedTag, onClick: handleSelected, selected: true })) : null),
+        React.createElement("section", { className: "relative" }, inputActive ? (React.createElement("section", { className: "absolute top-0 -left-1 bg-white shadow rounded pb-0.5 px-0.5", ref: ref }, tags.map(function (tag) {
+            return (React.createElement(TagButton, { tag: tag, key: tag, onClick: handleSelected }));
+        }))) : null)));
+};
+var TagButton = function (props) {
+    var handleClick = function (e) {
+        console.log("tagbutton click");
+        props.onClick(e);
+    };
+    return (React.createElement("button", { onClick: handleClick, "data-tag": props.tag, className: clsx("btn btn-xs h-auto m-0.5 inline-flex flex-nowrap items-center flex-shrink", props.selected ? "" : "btn-outline") },
+        props.selected ? (React.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", className: "inline-block w-3 h-3 mr-1 stroke-current" },
+            React.createElement("path", { "stroke-linecap": "round", "stroke-linejoin": "round", "stroke-width": "2", d: "M6 18L18 6M6 6l12 12" }))) : null,
+        React.createElement("span", { className: "overflow-ellipsis" }, props.tag)));
 };
 
 var PagePanel = React.memo(function PagePanel(props) {
@@ -419,6 +514,45 @@ var BlockEditorInstance = React.memo(function BlockEditorInstance(props) {
         state.init,
         state.setToolbarOpen,
     ]; }, isEqual), addBlock = _a[0], moveBlock = _a[1], setSelected = _a[2], setValue = _a[3], initBlocks = _a[4], setToolbarOpen = _a[5];
+    // const highlightRef = React.useRef<any>(null)
+    // const mouseMove = (e) => {
+    //     if (e.target === highlightRef.current) {
+    //         console.log("move to highlight")
+    //         return
+    //     }
+    //     const targetBB = e.target.getBoundingClientRect()
+    //     console.log("move", e, targetBB)
+    //     highlightRef.current.style.position = "absolute"
+    //     highlightRef.current.style.zIndex = 99999
+    //     highlightRef.current.style.width = `${targetBB.width}px`
+    //     highlightRef.current.style.height = `${targetBB.height}px`
+    //     highlightRef.current.style.border = "1px deeppink dashed"
+    //     // highlightRef.current.style.backgroundColor = "red"
+    //     // highlightRef.current.style.opacity = 0.1
+    //     highlightRef.current.style.top = `${targetBB.top + window.scrollY}px`
+    //     highlightRef.current.style.left = `${targetBB.left + window.scrollX}px`
+    //     highlightRef.current.style.userSelect = `none`
+    //     highlightRef.current.style.pointerEvents = `none`
+    //     highlightRef.current.style.transition = `all 300ms`
+    // }
+    // const handleMouseMove = useThrottle(mouseMove, 200)
+    // React.useEffect(() => {
+    //     if (!document.getElementById("highlight")) {
+    //         const highlightNode = document.createElement("aside")
+    //         highlightNode.setAttribute("id", "highlight")
+    //         document.body.appendChild(highlightNode)
+    //         highlightRef.current = highlightNode
+    //     } else {
+    //         highlightRef.current = document.getElementById("highlight")
+    //     }
+    //     if (props.source?.includes(".cs")) {
+    //         document.addEventListener("mousemove", handleMouseMove)
+    //     }
+    //     return () => {
+    //         document.removeEventListener("mousemove", handleMouseMove)
+    //         highlightRef.current.remove()
+    //     }
+    // }, [])
     React.useEffect(function () {
         initBlocks(props.source, props.tools, props.onChange);
     }, []);
