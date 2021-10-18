@@ -585,6 +585,7 @@
     var BlockEditor = function (props) {
         var editorRef = React__namespace.useRef(null);
         var isVisible = useOnScreen(editorRef);
+        console.log("BlockEditor isVisible", isVisible);
         return (React__namespace.createElement("main", { ref: editorRef }, isVisible ? (React__namespace.createElement(BlockEditorContext, null,
             React__namespace.createElement(BlockEditorInstance, __assign({}, props)))) : null));
     };
@@ -686,7 +687,8 @@
         var _a = React__namespace.useState(false), isIntersecting = _a[0], setIntersecting = _a[1];
         var observer = new IntersectionObserver(function (_a) {
             var entry = _a[0];
-            return setIntersecting(entry.isIntersecting);
+            console.log("onScreen", entry.isIntersecting);
+            setIntersecting(entry.isIntersecting);
         });
         React__namespace.useEffect(function () {
             observer.observe(ref.current);

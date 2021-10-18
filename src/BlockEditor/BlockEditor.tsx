@@ -27,6 +27,8 @@ export const BlockEditor = (props: BlockEditorProps) => {
     const editorRef = React.useRef(null)
     const isVisible = useOnScreen(editorRef)
 
+    console.log("BlockEditor isVisible", isVisible)
+
     return (
         <main ref={editorRef}>
             {isVisible ? (
@@ -201,9 +203,10 @@ const useThrottle = (cb, delay) => {
 const useOnScreen = (ref) => {
     const [isIntersecting, setIntersecting] = React.useState(false)
 
-    const observer = new IntersectionObserver(([entry]) =>
+    const observer = new IntersectionObserver(([entry]) => {
+        console.log("onScreen", entry.isIntersecting)
         setIntersecting(entry.isIntersecting)
-    )
+    })
 
     React.useEffect(() => {
         observer.observe(ref.current)

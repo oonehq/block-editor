@@ -565,6 +565,7 @@ var useCopyPasteBlocks = function () {
 var BlockEditor = function (props) {
     var editorRef = React.useRef(null);
     var isVisible = useOnScreen(editorRef);
+    console.log("BlockEditor isVisible", isVisible);
     return (React.createElement("main", { ref: editorRef }, isVisible ? (React.createElement(BlockEditorContext, null,
         React.createElement(BlockEditorInstance, __assign({}, props)))) : null));
 };
@@ -666,7 +667,8 @@ var useOnScreen = function (ref) {
     var _a = React.useState(false), isIntersecting = _a[0], setIntersecting = _a[1];
     var observer = new IntersectionObserver(function (_a) {
         var entry = _a[0];
-        return setIntersecting(entry.isIntersecting);
+        console.log("onScreen", entry.isIntersecting);
+        setIntersecting(entry.isIntersecting);
     });
     React.useEffect(function () {
         observer.observe(ref.current);
