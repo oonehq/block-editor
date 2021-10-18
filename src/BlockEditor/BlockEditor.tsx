@@ -24,10 +24,17 @@ interface BlockEditorProps {
 }
 
 export const BlockEditor = (props: BlockEditorProps) => {
+    const editorRef = React.useRef(null)
+    const isVisible = useOnScreen(editorRef)
+
     return (
-        <BlockEditorContext>
-            <BlockEditorInstance {...props} />
-        </BlockEditorContext>
+        <main ref={editorRef}>
+            {isVisible ? (
+                <BlockEditorContext>
+                    <BlockEditorInstance {...props} />
+                </BlockEditorContext>
+            ) : null}
+        </main>
     )
 }
 
@@ -146,7 +153,7 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
     // console.log("BlockEditor render")
 
     return (
-        <main className="min-h-[500px] max-h-[85vh] border border-gray-200 rounded relative overflow-hidden">
+        <main className="h-[85vh] border border-gray-200 rounded relative overflow-hidden">
             <DragDropContext
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
@@ -189,4 +196,22 @@ const useThrottle = (cb, delay) => {
         throttle((...args) => cbRef.current(...args), delay, options),
         [delay]
     )
+}
+
+const useOnScreen = (ref) => {
+    const [isIntersecting, setIntersecting] = React.useState(false)
+
+    const observer = new IntersectionObserver(([entry]) =>
+        setIntersecting(entry.isIntersecting)
+    )
+
+    React.useEffect(() => {
+        observer.observe(ref.current)
+        // Remove the observer as soon as the component is unmounted
+        return () => {
+            observer.disconnect()
+        }
+    }, [])
+
+    return isIntersecting
 }

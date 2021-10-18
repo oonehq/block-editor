@@ -5,6 +5,7 @@ import clsx from "clsx"
 import { useBlockInputStore } from "./BlockEditorStoreProvider"
 import { ErrorBoundary } from "react-error-boundary"
 import isEqual from "react-fast-compare"
+import { useHotkeys } from "react-hotkeys-hook"
 
 import { ChevronDown, ChevronUp, Move, Trash } from "./Icons"
 
@@ -18,6 +19,8 @@ export const PagePanel = React.memo(function PagePanel(props) {
             })),
         isEqual
     )
+
+    useCopyPasteBlocks()
 
     // console.log("PagePanel render", blocks)
 
@@ -110,14 +113,9 @@ const PageBlock = React.memo(function PageBlock(props: any) {
         handlePrevent(e)
     }
 
-    const handlePrevent = (e) => {
-        e.preventDefault()
-        e.stopPropagation()
-    }
-
     const Block = tools[props.block.type]?.Component ?? MissingBlock
 
-    console.log("PageBlock render", blockProps)
+    // console.log("PageBlock render", props.index, blockProps)
 
     return (
         <Draggable draggableId={props.block.id} index={props.index}>
@@ -189,6 +187,7 @@ const PageBlock = React.memo(function PageBlock(props: any) {
                                 </div>
                             )}
                         >
+                            {/* {JSON.stringify(blockProps.data)} */}
                             <Block {...blockProps} />
                         </ErrorBoundary>
                     </div>
@@ -197,3 +196,78 @@ const PageBlock = React.memo(function PageBlock(props: any) {
         </Draggable>
     )
 })
+
+const handlePrevent = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+}
+
+const useCopyPasteBlocks = () => {
+    const [selectedBlockProps, selectedIndex, copyBlock] = useBlockInputStore(
+        (state) => [
+            state.blocks.find((block) => block.id === state.selected),
+            state.blocks.findIndex((block) => block.id === state.selected),
+            state.copyBlock,
+        ]
+    )
+
+    // console.log("useCopyPasteBlocks", selectedBlockProps, selectedIndex)
+
+    const handleCopyBlock = (e) => {
+        // console.log("copy pressed", selectedBlockProps)
+
+        if (!selectedBlockProps) {
+            return
+        }
+
+        handlePrevent(e)
+        // console.log(
+        //     "copy block",
+        //     selectedBlockProps.type,
+        //     selectedBlockProps._$settings
+        // )
+        const copyPayload = JSON.stringify({
+            action: "COPY_BLOCK",
+            payload: selectedBlockProps,
+        })
+
+        if ("clipboard" in navigator) {
+            navigator.clipboard.writeText(copyPayload)
+        }
+    }
+
+    const handlePasteBlock = (e) => {
+        handlePrevent(e)
+
+        if ("clipboard" in navigator) {
+            const pasteIndex = Math.max(selectedIndex, 0)
+
+            navigator.clipboard.readText().then((value) => {
+                // console.log("value", value)
+                try {
+                    const clipboard = JSON.parse(value)
+                    // console.log("clipboard", clipboard)
+                    if (
+                        clipboard?.action === "COPY_BLOCK" &&
+                        typeof clipboard?.payload?.type === "string"
+                    ) {
+                        // console.log(
+                        //     "copyBlock",
+                        //     clipboard?.payload?.type,
+                        //     "to index",
+                        //     pasteIndex
+                        // )
+                        copyBlock(clipboard.payload, pasteIndex)
+                    }
+                } catch (e) {
+                    console.error("invalid paste payload", e)
+                }
+            })
+        }
+    }
+
+    useHotkeys("ctrl+c, command+c", handleCopyBlock, {}, [selectedBlockProps])
+    useHotkeys("ctrl+v, command+v", handlePasteBlock, {}, [selectedIndex])
+
+    return null
+}

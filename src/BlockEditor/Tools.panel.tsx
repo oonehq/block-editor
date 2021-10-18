@@ -30,7 +30,7 @@ export const ToolsPanel = React.memo(function ToolsPanel(props) {
 })
 
 const ToolsListWithFilter = (props) => {
-    const [selectedTag, setSelectedTag] = React.useState("projektovy dluhopis")
+    const [selectedTag, setSelectedTag] = React.useState("")
 
     return (
         <section>

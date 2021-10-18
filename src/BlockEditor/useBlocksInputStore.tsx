@@ -49,14 +49,6 @@ const store = (set, get) => ({
             state.selected = id
         })
     },
-    // updateBlock: (id, paramPath, value) => {
-    //     get().update((state) => {
-    //         let block = state.blocks.find((block) => block.id === id)
-    //         if (block) {
-    //             lodashSet(block.data, paramPath, value)
-    //         }
-    //     })
-    // },
     updateBlockData: (id, data) => {
         get().update((state) => {
             let block = state.blocks.find((block) => block.id === id)
@@ -81,6 +73,19 @@ const store = (set, get) => ({
             const [removed] = state.blocks.splice(sourceIndex, 1)
             state.blocks.splice(targetIndex, 0, removed)
         })
+        if (get().onChange) get().onChange(get().blocks)
+    },
+    copyBlock: (blockProps, index) => {
+        get().update((state) => {
+            state.blocks.splice(index, 0, {
+                id: nanoid(),
+                type: blockProps.type,
+                data: blockProps.data,
+                _$settings: blockProps._$settings,
+                version: blockProps.version,
+            })
+        })
+
         if (get().onChange) get().onChange(get().blocks)
     },
     deleteBlock: (blockID) => {

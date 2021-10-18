@@ -91,16 +91,7 @@ var store$1 = function (set, get) { return (__assign(__assign({}, defaultState$1
         get().update(function (state) {
             state.selected = id;
         });
-    }, 
-    // updateBlock: (id, paramPath, value) => {
-    //     get().update((state) => {
-    //         let block = state.blocks.find((block) => block.id === id)
-    //         if (block) {
-    //             lodashSet(block.data, paramPath, value)
-    //         }
-    //     })
-    // },
-    updateBlockData: function (id, data) {
+    }, updateBlockData: function (id, data) {
         get().update(function (state) {
             var block = state.blocks.find(function (block) { return block.id === id; });
             block.data = data;
@@ -122,6 +113,18 @@ var store$1 = function (set, get) { return (__assign(__assign({}, defaultState$1
         get().update(function (state) {
             var removed = state.blocks.splice(sourceIndex, 1)[0];
             state.blocks.splice(targetIndex, 0, removed);
+        });
+        if (get().onChange)
+            get().onChange(get().blocks);
+    }, copyBlock: function (blockProps, index) {
+        get().update(function (state) {
+            state.blocks.splice(index, 0, {
+                id: nanoid(),
+                type: blockProps.type,
+                data: blockProps.data,
+                _$settings: blockProps._$settings,
+                version: blockProps.version,
+            });
         });
         if (get().onChange)
             get().onChange(get().blocks);
@@ -324,7 +327,7 @@ var ToolsPanel = React.memo(function ToolsPanel(props) {
         React.createElement(ToolsListWithFilter, { tools: tools })));
 });
 var ToolsListWithFilter = function (props) {
-    var _a = React.useState("projektovy dluhopis"), selectedTag = _a[0], setSelectedTag = _a[1];
+    var _a = React.useState(""), selectedTag = _a[0], setSelectedTag = _a[1];
     return (React.createElement("section", null,
         React.createElement(TagFilter, { tools: props.tools, selectedTag: selectedTag, setSelectedTag: setSelectedTag }),
         React.createElement(Droppable, { droppableId: "sidebar" }, function (provided, snapshot) { return (React.createElement("section", __assign({ ref: provided.innerRef }, provided.droppableProps), props.tools
@@ -418,6 +421,7 @@ var PagePanel = React.memo(function PagePanel(props) {
             version: block.version,
         }); });
     }, isEqual);
+    useCopyPasteBlocks();
     // console.log("PagePanel render", blocks)
     return (React.createElement(Droppable, { droppableId: "page" }, function (provided, snapshot) { return (React.createElement("div", __assign({}, provided.droppableProps, { ref: provided.innerRef, className: clsx("relative min-h-[150px] w-full border border-gray-200 bg-white"
         // "min-w-[1024px]"
@@ -467,12 +471,8 @@ var PageBlock = React.memo(function PageBlock(props) {
         }
         handlePrevent(e);
     };
-    var handlePrevent = function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-    };
     var Block = (_b = (_a = tools[props.block.type]) === null || _a === void 0 ? void 0 : _a.Component) !== null && _b !== void 0 ? _b : MissingBlock;
-    console.log("PageBlock render", blockProps);
+    // console.log("PageBlock render", props.index, blockProps)
     return (React.createElement(Draggable, { draggableId: props.block.id, index: props.index }, function (provided, snapshot) { return (React.createElement("section", __assign({ ref: provided.innerRef }, provided.draggableProps, { className: clsx("relative", isSelected
             ? "ring ring-yellow-300"
             : "hover:ring ring-yellow-300"), onClick: handleClick }),
@@ -500,10 +500,73 @@ var PageBlock = React.memo(function PageBlock(props) {
                 } },
                 React.createElement(Block, __assign({}, blockProps)))))); }));
 });
+var handlePrevent = function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+};
+var useCopyPasteBlocks = function () {
+    var _a = useBlockInputStore(function (state) { return [
+        state.blocks.find(function (block) { return block.id === state.selected; }),
+        state.blocks.findIndex(function (block) { return block.id === state.selected; }),
+        state.copyBlock,
+    ]; }), selectedBlockProps = _a[0], selectedIndex = _a[1], copyBlock = _a[2];
+    // console.log("useCopyPasteBlocks", selectedBlockProps, selectedIndex)
+    var handleCopyBlock = function (e) {
+        // console.log("copy pressed", selectedBlockProps)
+        if (!selectedBlockProps) {
+            return;
+        }
+        handlePrevent(e);
+        // console.log(
+        //     "copy block",
+        //     selectedBlockProps.type,
+        //     selectedBlockProps._$settings
+        // )
+        var copyPayload = JSON.stringify({
+            action: "COPY_BLOCK",
+            payload: selectedBlockProps,
+        });
+        if ("clipboard" in navigator) {
+            navigator.clipboard.writeText(copyPayload);
+        }
+    };
+    var handlePasteBlock = function (e) {
+        handlePrevent(e);
+        if ("clipboard" in navigator) {
+            var pasteIndex_1 = Math.max(selectedIndex, 0);
+            navigator.clipboard.readText().then(function (value) {
+                var _a;
+                // console.log("value", value)
+                try {
+                    var clipboard = JSON.parse(value);
+                    // console.log("clipboard", clipboard)
+                    if ((clipboard === null || clipboard === void 0 ? void 0 : clipboard.action) === "COPY_BLOCK" &&
+                        typeof ((_a = clipboard === null || clipboard === void 0 ? void 0 : clipboard.payload) === null || _a === void 0 ? void 0 : _a.type) === "string") {
+                        // console.log(
+                        //     "copyBlock",
+                        //     clipboard?.payload?.type,
+                        //     "to index",
+                        //     pasteIndex
+                        // )
+                        copyBlock(clipboard.payload, pasteIndex_1);
+                    }
+                }
+                catch (e) {
+                    console.error("invalid paste payload", e);
+                }
+            });
+        }
+    };
+    useHotkeys("ctrl+c, command+c", handleCopyBlock, {}, [selectedBlockProps]);
+    useHotkeys("ctrl+v, command+v", handlePasteBlock, {}, [selectedIndex]);
+    return null;
+};
 
 var BlockEditor = function (props) {
-    return (React.createElement(BlockEditorContext, null,
-        React.createElement(BlockEditorInstance, __assign({}, props))));
+    var editorRef = React.useRef(null);
+    var isVisible = useOnScreen(editorRef);
+    return (React.createElement("main", { ref: editorRef }, isVisible ? (React.createElement(BlockEditorContext, null,
+        React.createElement(BlockEditorInstance, __assign({}, props)))) : null));
 };
 var BlockEditorInstance = React.memo(function BlockEditorInstance(props) {
     var _a = useBlockInputStore(function (state) { return [
@@ -589,7 +652,7 @@ var BlockEditorInstance = React.memo(function BlockEditorInstance(props) {
         setToolbarOpen(true);
     };
     // console.log("BlockEditor render")
-    return (React.createElement("main", { className: "min-h-[500px] max-h-[85vh] border border-gray-200 rounded relative overflow-hidden" },
+    return (React.createElement("main", { className: "h-[85vh] border border-gray-200 rounded relative overflow-hidden" },
         React.createElement(DragDropContext, { onDragStart: handleDragStart, onDragEnd: handleDragEnd },
             React.createElement("header", { className: "w-full h-8 bg-gray-50 flex justify-start items-center px-1" },
                 React.createElement("button", { className: "btn btn-outline btn-xs", onClick: handleAdd }, "+ P\u0159idat blok")),
@@ -599,6 +662,21 @@ var BlockEditorInstance = React.memo(function BlockEditorInstance(props) {
                     React.createElement(PagePanel, null)),
                 React.createElement(SettingsPanel, null)))));
 }, isEqual);
+var useOnScreen = function (ref) {
+    var _a = React.useState(false), isIntersecting = _a[0], setIntersecting = _a[1];
+    var observer = new IntersectionObserver(function (_a) {
+        var entry = _a[0];
+        return setIntersecting(entry.isIntersecting);
+    });
+    React.useEffect(function () {
+        observer.observe(ref.current);
+        // Remove the observer as soon as the component is unmounted
+        return function () {
+            observer.disconnect();
+        };
+    }, []);
+    return isIntersecting;
+};
 
 var SettingsForm = function (props) {
     var formMethods = null;
