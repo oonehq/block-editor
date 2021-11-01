@@ -237,14 +237,12 @@ var SettingsPanel = React.memo(function SettingsPanel(props) {
         return (_a = tools[blockMeta.type]) === null || _a === void 0 ? void 0 : _a.title;
     }, [blockMeta === null || blockMeta === void 0 ? void 0 : blockMeta.type]);
     // console.log("SettingsPanel render", blockMeta)
-    return (React.createElement("aside", { className: clsx("bg-gray-50 flex-0 p-2 overflow-auto max-h-[80vh]", fixedSettingsPanel ? "w-[340px] xl:w-[400px]" : "w-0") }, blockMeta ? (React.createElement(SettingsWrapper, null,
+    return (React.createElement("aside", { className: clsx("bg-gray-50 flex-0 p-2 overflow-auto max-h-[80vh]", fixedSettingsPanel ? "w-[340px] xl:w-[400px]" : "w-0") }, blockMeta ? (React.createElement(SettingsWrapper, { id: blockMeta.id },
         React.createElement("header", { className: "text-white bg-blue-800 cursor-move dragHandle p-1 pl-2 flex-none h-8 flex items-center justify-between" },
             React.createElement("section", { className: "truncate" }, title !== null && title !== void 0 ? title : "Nastavení stránky"),
             React.createElement("aside", { className: "flex items-center justify-center" },
                 React.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleToggleFixedSidebar },
-                    React.createElement(ChevronDown, { className: clsx("w-4 text-white transform", fixedSettingsPanel
-                            ? "rotate-90"
-                            : "-rotate-90"), label: "Move to sidebar" })),
+                    React.createElement(ChevronDown, { className: clsx("w-4 text-white transform", fixedSettingsPanel ? "rotate-90" : "-rotate-90"), label: "Move to sidebar" })),
                 React.createElement("button", { className: "btn btn-xs bg-transparent border-none", onClick: handleClose },
                     React.createElement(Close, { className: "w-4 text-white", label: "Close" })))),
         React.createElement("section", { className: "overflow-auto p-2 h-[calc(100%-2rem)] bg-gray-50" },
@@ -256,7 +254,7 @@ var SettingsPanel = React.memo(function SettingsPanel(props) {
                         React.createElement("button", { className: "btn", onClick: function () {
                                 resetErrorBoundary();
                             } }, "Try again")));
-                } }, blockMeta ? (React.createElement(LazySettings, { blockMeta: blockMeta })) : null)))) : null));
+                } }, blockMeta ? React.createElement(LazySettings, { blockMeta: blockMeta }) : null)))) : null));
 }, isEqual);
 var SettingsWrapper = React.memo(function (props) {
     var fixedSettingsPanel = useBlockEditorStore(function (state) { return [
@@ -265,11 +263,11 @@ var SettingsWrapper = React.memo(function (props) {
     if (fixedSettingsPanel) {
         return React.createElement(React.Fragment, null, props.children);
     }
-    return (React.createElement(Rnd, { className: "flex flex-col border border-gray-300 rounded shadow-lg bg-white z-[99999] overflow-hidden", enableUserSelectHack: false, dragHandleClassName: "dragHandle", minWidth: 300, minHeight: 300, default: {
-            x: -450,
-            y: 50,
+    return (React.createElement(Rnd, { key: props.id, className: "flex flex-col border border-gray-300 rounded shadow-lg bg-white z-[99999] overflow-hidden", enableUserSelectHack: false, dragHandleClassName: "dragHandle", minWidth: 300, minHeight: 300, maxHeight: "60vh", maxWidth: 600, default: {
+            x: -480,
+            y: window.scrollY + 50,
             width: 400,
-            height: "60vh",
+            height: "50vh",
         } }, props.children));
 });
 var LazyloadComponent = function (componentPath) {
@@ -653,13 +651,13 @@ var BlockEditorInstance = React.memo(function BlockEditorInstance(props) {
         setToolbarOpen(true);
     };
     // console.log("BlockEditor render")
-    return (React.createElement("main", { className: "h-[85vh] border border-gray-200 rounded relative overflow-hidden" },
+    return (React.createElement("main", { className: "border border-gray-200 rounded relative overflow-hidden" },
         React.createElement(DragDropContext, { onDragStart: handleDragStart, onDragEnd: handleDragEnd },
             React.createElement("header", { className: "w-full h-8 bg-gray-50 flex justify-start items-center px-1" },
                 React.createElement("button", { className: "btn btn-outline btn-xs", onClick: handleAdd }, "+ P\u0159idat blok")),
             React.createElement(ToolsPanel, null),
             React.createElement("section", { className: "flex" },
-                React.createElement("section", { className: "bg-gray-300 flex-1 overflow-auto p-4 h-[80vh] relative", onClick: handleClickOutside },
+                React.createElement("section", { className: "bg-gray-300 flex-1 overflow-auto p-4 relative", onClick: handleClickOutside },
                     React.createElement(PagePanel, null)),
                 React.createElement(SettingsPanel, null)))));
 }, isEqual);
