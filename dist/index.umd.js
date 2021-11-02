@@ -360,14 +360,11 @@
                 : null)); })));
     };
     var ToolsItem = function (props) {
-        // console.log("ToolsItem render")
         return (React__namespace.createElement("article", { className: "m-4" },
             React__namespace.createElement(reactBeautifulDnd.Draggable, { draggableId: props.name, index: props.index }, function (provided, snapshot) {
                 var _a, _b;
                 return (React__namespace.createElement("article", __assign({ className: "bg-white shadow-xl rounded p-1", ref: provided.innerRef }, provided.draggableProps, provided.dragHandleProps),
-                    React__namespace.createElement("header", { className: "text-center text-sm" }, ((_a = props.block) === null || _a === void 0 ? void 0 : _a.title)
-                        ? props.block.title
-                        : props.name),
+                    React__namespace.createElement("header", { className: "text-center text-sm" }, ((_a = props.block) === null || _a === void 0 ? void 0 : _a.title) ? props.block.title : props.name),
                     ((_b = props.block) === null || _b === void 0 ? void 0 : _b.previewImage) ? (React__namespace.createElement("img", { src: props.block.previewImage })) : null));
             })));
     };
@@ -414,10 +411,10 @@
             React__namespace.createElement("header", { className: "flex items-center overflow-hidden" },
                 React__namespace.createElement("button", { onClick: handleFocus, className: "btn btn-xs btn-outline border-none m-0.5 italic opacity-75 flex-none" },
                     React__namespace.createElement(Search, { className: "w-4 h-4" }),
-                    !props.selectedTag ? (React__namespace.createElement("span", { className: "ml-1" }, "Filtrovat")) : null),
+                    !props.selectedTag ? React__namespace.createElement("span", { className: "ml-1" }, "Filtrovat") : null),
                 props.selectedTag ? (React__namespace.createElement(TagButton, { tag: props.selectedTag, onClick: handleSelected, selected: true })) : null),
             React__namespace.createElement("section", { className: "relative" }, inputActive ? (React__namespace.createElement("section", { className: "absolute top-0 -left-1 bg-white shadow rounded pb-0.5 px-0.5", ref: ref }, tags.map(function (tag) {
-                return (React__namespace.createElement(TagButton, { tag: tag, key: tag, onClick: handleSelected }));
+                return React__namespace.createElement(TagButton, { tag: tag, key: tag, onClick: handleSelected });
             }))) : null)));
     };
     var TagButton = function (props) {

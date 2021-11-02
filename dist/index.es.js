@@ -340,14 +340,11 @@ var ToolsListWithFilter = function (props) {
             : null)); })));
 };
 var ToolsItem = function (props) {
-    // console.log("ToolsItem render")
     return (React.createElement("article", { className: "m-4" },
         React.createElement(Draggable, { draggableId: props.name, index: props.index }, function (provided, snapshot) {
             var _a, _b;
             return (React.createElement("article", __assign({ className: "bg-white shadow-xl rounded p-1", ref: provided.innerRef }, provided.draggableProps, provided.dragHandleProps),
-                React.createElement("header", { className: "text-center text-sm" }, ((_a = props.block) === null || _a === void 0 ? void 0 : _a.title)
-                    ? props.block.title
-                    : props.name),
+                React.createElement("header", { className: "text-center text-sm" }, ((_a = props.block) === null || _a === void 0 ? void 0 : _a.title) ? props.block.title : props.name),
                 ((_b = props.block) === null || _b === void 0 ? void 0 : _b.previewImage) ? (React.createElement("img", { src: props.block.previewImage })) : null));
         })));
 };
@@ -394,10 +391,10 @@ var TagFilter = function (props) {
         React.createElement("header", { className: "flex items-center overflow-hidden" },
             React.createElement("button", { onClick: handleFocus, className: "btn btn-xs btn-outline border-none m-0.5 italic opacity-75 flex-none" },
                 React.createElement(Search, { className: "w-4 h-4" }),
-                !props.selectedTag ? (React.createElement("span", { className: "ml-1" }, "Filtrovat")) : null),
+                !props.selectedTag ? React.createElement("span", { className: "ml-1" }, "Filtrovat") : null),
             props.selectedTag ? (React.createElement(TagButton, { tag: props.selectedTag, onClick: handleSelected, selected: true })) : null),
         React.createElement("section", { className: "relative" }, inputActive ? (React.createElement("section", { className: "absolute top-0 -left-1 bg-white shadow rounded pb-0.5 px-0.5", ref: ref }, tags.map(function (tag) {
-            return (React.createElement(TagButton, { tag: tag, key: tag, onClick: handleSelected }));
+            return React.createElement(TagButton, { tag: tag, key: tag, onClick: handleSelected });
         }))) : null)));
 };
 var TagButton = function (props) {
