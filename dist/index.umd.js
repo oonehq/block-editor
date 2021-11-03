@@ -1,8 +1,8 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('react'), require('lodash/throttle'), require('react-beautiful-dnd'), require('react-fast-compare'), require('react-hotkeys-hook'), require('react-error-boundary'), require('clsx'), require('react-rnd'), require('zustand'), require('immer'), require('nanoid'), require('zustand/middleware'), require('deep-copy'), require('react-hook-form'), require('react-quill')) :
-    typeof define === 'function' && define.amd ? define(['exports', 'react', 'lodash/throttle', 'react-beautiful-dnd', 'react-fast-compare', 'react-hotkeys-hook', 'react-error-boundary', 'clsx', 'react-rnd', 'zustand', 'immer', 'nanoid', 'zustand/middleware', 'deep-copy', 'react-hook-form', 'react-quill'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.BlockEditor = {}, global.React, null, global.reactBeautifulDnd, global.isEqual, global.reactHotkeysHook, global.reactErrorBoundary, global.clsx, global.reactRnd, global.create, global.produce, global.nanoid, global.middleware, global.deepCopy, global.reactHookForm, global.ReactQuill));
-}(this, (function (exports, React, throttle, reactBeautifulDnd, isEqual, reactHotkeysHook, reactErrorBoundary, clsx, reactRnd, create, produce, nanoid, middleware, deepCopy, reactHookForm, ReactQuill) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('react'), require('react-beautiful-dnd'), require('react-fast-compare'), require('react-hotkeys-hook'), require('react-error-boundary'), require('clsx'), require('react-rnd'), require('zustand'), require('immer'), require('nanoid'), require('zustand/middleware'), require('lodash/throttle'), require('deep-copy'), require('react-hook-form'), require('react-quill')) :
+    typeof define === 'function' && define.amd ? define(['exports', 'react', 'react-beautiful-dnd', 'react-fast-compare', 'react-hotkeys-hook', 'react-error-boundary', 'clsx', 'react-rnd', 'zustand', 'immer', 'nanoid', 'zustand/middleware', 'lodash/throttle', 'deep-copy', 'react-hook-form', 'react-quill'], factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.BlockEditor = {}, global.React, global.reactBeautifulDnd, global.isEqual, global.reactHotkeysHook, global.reactErrorBoundary, global.clsx, global.reactRnd, global.create, global.produce, global.nanoid, global.middleware, global.throttle, global.deepCopy, global.reactHookForm, global.ReactQuill));
+}(this, (function (exports, React, reactBeautifulDnd, isEqual, reactHotkeysHook, reactErrorBoundary, clsx, reactRnd, create, produce, nanoid, middleware, throttle, deepCopy, reactHookForm, ReactQuill) { 'use strict';
 
     function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -31,6 +31,7 @@
     var clsx__default = /*#__PURE__*/_interopDefaultLegacy(clsx);
     var create__default = /*#__PURE__*/_interopDefaultLegacy(create);
     var produce__default = /*#__PURE__*/_interopDefaultLegacy(produce);
+    var throttle__default = /*#__PURE__*/_interopDefaultLegacy(throttle);
     var deepCopy__default = /*#__PURE__*/_interopDefaultLegacy(deepCopy);
     var ReactQuill__default = /*#__PURE__*/_interopDefaultLegacy(ReactQuill);
 
@@ -428,6 +429,22 @@
             React__namespace.createElement("span", { className: "overflow-ellipsis" }, props.tag)));
     };
 
+    var useThrottle = function (cb, delay) {
+        var options = { leading: true, trailing: true }; // add custom lodash options
+        var cbRef = React__namespace.useRef(cb);
+        // use mutable ref to make useCallback/throttle not depend on `cb` dep
+        React__namespace.useEffect(function () {
+            cbRef.current = cb;
+        });
+        return React__namespace.useCallback(throttle__default['default'](function () {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i] = arguments[_i];
+            }
+            return cbRef.current.apply(cbRef, args);
+        }, delay, options), [delay]);
+    };
+
     var PagePanel = React__namespace.memo(function PagePanel(props) {
         var blocks = useBlockInputStore(function (state) {
             return state.blocks.map(function (block) { return ({
@@ -438,13 +455,13 @@
         }, isEqual__default['default']);
         useCopyPasteBlocks();
         // console.log("PagePanel render", blocks)
-        return (React__namespace.createElement(reactBeautifulDnd.Droppable, { droppableId: "page" }, function (provided, snapshot) { return (React__namespace.createElement("div", __assign({}, provided.droppableProps, { ref: provided.innerRef, className: clsx__default['default']("relative min-h-[150px] w-full border border-gray-200 bg-white"
-            // "min-w-[1024px]"
-            ) }), blocks === null || blocks === void 0 ? void 0 :
+        return (React__namespace.createElement(reactBeautifulDnd.Droppable, { droppableId: "page" }, function (provided, snapshot) { return (React__namespace.createElement("section", __assign({ id: "page-wrapper" }, provided.droppableProps, { ref: provided.innerRef, className: clsx__default['default']("relative min-h-[150px] w-full border border-gray-200 bg-white") }), blocks === null || blocks === void 0 ? void 0 :
             blocks.map(function (block, index) {
                 return (React__namespace.createElement(PageBlock, { block: block, index: index, key: "block-" + block.id }));
             }),
-            provided.placeholder)); }));
+            provided.placeholder,
+            React__namespace.createElement(SelectedHighlightNode, null),
+            React__namespace.createElement(HoverHighlightNode, null))); }));
     });
     var MissingBlock = function (props) {
         return (React__namespace.createElement("main", { className: "py-4 flex items-center justify-center" },
@@ -487,10 +504,8 @@
             handlePrevent(e);
         };
         var Block = (_b = (_a = tools[props.block.type]) === null || _a === void 0 ? void 0 : _a.Component) !== null && _b !== void 0 ? _b : MissingBlock;
-        // console.log("PageBlock render", props.index, blockProps)
-        return (React__namespace.createElement(reactBeautifulDnd.Draggable, { draggableId: props.block.id, index: props.index }, function (provided, snapshot) { return (React__namespace.createElement("section", __assign({ ref: provided.innerRef }, provided.draggableProps, { className: clsx__default['default']("relative", isSelected
-                ? "ring ring-yellow-300"
-                : "hover:ring ring-yellow-300"), onClick: handleClick }),
+        console.log("PageBlock render", props.index, blockProps);
+        return (React__namespace.createElement(reactBeautifulDnd.Draggable, { draggableId: props.block.id, index: props.index }, function (provided, snapshot) { return (React__namespace.createElement("section", __assign({ ref: provided.innerRef }, provided.draggableProps, { className: clsx__default['default']("relative"), onClick: handleClick, "data-block-type": props.block.type, "data-block-id": props.block.id }),
             React__namespace.createElement("aside", { className: clsx__default['default']("absolute -top-3 right-1 z-[9999]", isSelected ? "block" : "hidden") },
                 React__namespace.createElement("section", { className: "btn-group" },
                     React__namespace.createElement("button", { className: "btn btn-xs", onClick: handleMoveUp },
@@ -576,6 +591,78 @@
         reactHotkeysHook.useHotkeys("ctrl+v, command+v", handlePasteBlock, {}, [selectedIndex]);
         return null;
     };
+    var SelectedHighlightNode = function (props) {
+        var selected = useBlockInputStore(function (state) { return [state.selected]; }, isEqual__default['default'])[0];
+        var _a = React__namespace.useState({}), computedStyle = _a[0], setComputedStyle = _a[1];
+        var pageWrapperRef = React__namespace.useRef(null);
+        var selectedRef = React__namespace.useRef(null);
+        React__namespace.useEffect(function () {
+            pageWrapperRef.current = document.getElementById("page-wrapper");
+        }, []);
+        React__namespace.useEffect(function () {
+            if (selected) {
+                selectedRef.current = document.querySelector("[data-block-id='" + selected + "']");
+                var targetBB = selectedRef.current.getBoundingClientRect();
+                var pageWrapperBB = pageWrapperRef.current.getBoundingClientRect();
+                console.log("selected highlight", {
+                    selected: selected,
+                    targetBB: targetBB,
+                });
+                setComputedStyle({
+                    width: targetBB.width + "px",
+                    height: targetBB.height + "px",
+                    top: targetBB.top - pageWrapperBB.top - 1 + "px",
+                    left: targetBB.left - pageWrapperBB.left - 1 + "px",
+                    userSelect: "none",
+                });
+            }
+            else {
+                setComputedStyle({
+                    display: "none",
+                });
+            }
+        }, [selected]);
+        return (React__namespace.createElement("aside", { className: "absolute border-[2px] border-yellow-300 pointer-events-none", style: __assign({ zIndex: 999 }, computedStyle) }));
+    };
+    var HoverHighlightNode = function (props) {
+        var _a;
+        var tools = useBlockInputStore(function (state) { return [state.tools]; }, isEqual__default['default'])[0];
+        var _b = React__namespace.useState({}), computedStyle = _b[0], setComputedStyle = _b[1];
+        var _c = React__namespace.useState(""), blockType = _c[0], setBlockType = _c[1];
+        var pageWrapperRef = React__namespace.useRef(null);
+        var handleMouseMove = useThrottle(function (e) {
+            var blockType = e.target.getAttribute("data-block-type");
+            if (blockType) {
+                setBlockType(blockType);
+                var targetBB = e.target.getBoundingClientRect();
+                var pageWrapperBB = pageWrapperRef.current.getBoundingClientRect();
+                console.log("move", {
+                    blockType: blockType,
+                    e: e,
+                    targetBB: targetBB,
+                });
+                setComputedStyle({
+                    width: targetBB.width + "px",
+                    height: targetBB.height + "px",
+                    top: targetBB.top - pageWrapperBB.top - 1 + "px",
+                    left: targetBB.left - pageWrapperBB.left - 1 + "px",
+                    transition: "all 100ms",
+                    userSelect: "none",
+                });
+            }
+        }, 300);
+        React__namespace.useEffect(function () {
+            pageWrapperRef.current = document.getElementById("page-wrapper");
+            pageWrapperRef.current.addEventListener("mousemove", handleMouseMove);
+            // pageWrapperRef.current.addEventListener("mouseleave", handleMouseLeave)
+            return function () {
+                pageWrapperRef.current.removeEventListener("mousemove", handleMouseMove);
+                //   pageWrapperRef.current.removeEventListener("mouseleave", handleMouseLeave)
+            };
+        }, []);
+        return (React__namespace.createElement("aside", { className: "absolute border-[2px] border-yellow-300 border-dashed pointer-events-none", style: __assign({ zIndex: 999 }, computedStyle) },
+            React__namespace.createElement("section", { className: "absolute top-[-2px] left-[-2px] bg-yellow-300 rounded-br text-xs px-1 py-0.5" }, (_a = tools === null || tools === void 0 ? void 0 : tools[blockType]) === null || _a === void 0 ? void 0 : _a.title)));
+    };
 
     var BlockEditor = function (props) {
         var editorRef = React__namespace.useRef(null);
@@ -593,45 +680,6 @@
             state.init,
             state.setToolbarOpen,
         ]; }, isEqual__default['default']), addBlock = _a[0], moveBlock = _a[1], setSelected = _a[2], setValue = _a[3], initBlocks = _a[4], setToolbarOpen = _a[5];
-        // const highlightRef = React.useRef<any>(null)
-        // const mouseMove = (e) => {
-        //     if (e.target === highlightRef.current) {
-        //         console.log("move to highlight")
-        //         return
-        //     }
-        //     const targetBB = e.target.getBoundingClientRect()
-        //     console.log("move", e, targetBB)
-        //     highlightRef.current.style.position = "absolute"
-        //     highlightRef.current.style.zIndex = 99999
-        //     highlightRef.current.style.width = `${targetBB.width}px`
-        //     highlightRef.current.style.height = `${targetBB.height}px`
-        //     highlightRef.current.style.border = "1px deeppink dashed"
-        //     // highlightRef.current.style.backgroundColor = "red"
-        //     // highlightRef.current.style.opacity = 0.1
-        //     highlightRef.current.style.top = `${targetBB.top + window.scrollY}px`
-        //     highlightRef.current.style.left = `${targetBB.left + window.scrollX}px`
-        //     highlightRef.current.style.userSelect = `none`
-        //     highlightRef.current.style.pointerEvents = `none`
-        //     highlightRef.current.style.transition = `all 300ms`
-        // }
-        // const handleMouseMove = useThrottle(mouseMove, 200)
-        // React.useEffect(() => {
-        //     if (!document.getElementById("highlight")) {
-        //         const highlightNode = document.createElement("aside")
-        //         highlightNode.setAttribute("id", "highlight")
-        //         document.body.appendChild(highlightNode)
-        //         highlightRef.current = highlightNode
-        //     } else {
-        //         highlightRef.current = document.getElementById("highlight")
-        //     }
-        //     if (props.source?.includes(".cs")) {
-        //         document.addEventListener("mousemove", handleMouseMove)
-        //     }
-        //     return () => {
-        //         document.removeEventListener("mousemove", handleMouseMove)
-        //         highlightRef.current.remove()
-        //     }
-        // }, [])
         React__namespace.useEffect(function () {
             initBlocks(props.source, props.tools, props.onChange);
         }, []);
