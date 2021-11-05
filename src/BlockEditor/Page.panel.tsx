@@ -73,6 +73,7 @@ const PageBlock = React.memo(function PageBlock(props: any) {
     blocksCount,
     tools,
     setToolbarOpen,
+    permissions,
   ] = useBlockInputStore(
     (state) => [
       state.setSelected,
@@ -82,6 +83,7 @@ const PageBlock = React.memo(function PageBlock(props: any) {
       state.blocks.length,
       state.tools,
       state.setToolbarOpen,
+      state.permissions,
     ],
     isEqual
   )
@@ -131,27 +133,29 @@ const PageBlock = React.memo(function PageBlock(props: any) {
           data-block-type={props.block.type}
           data-block-id={props.block.id}
         >
-          <aside
-            className={clsx(
-              `absolute -top-3 right-1 z-[9999]`,
-              isSelected ? "block" : "hidden"
-            )}
-          >
-            <section className="btn-group">
-              <button className="btn btn-xs" onClick={handleMoveUp}>
-                <ChevronUp className="w-4" label="Move up" />
-              </button>
-              <button className="btn btn-xs" onClick={handleMoveDown}>
-                <ChevronDown className="w-4" label="Move up" />
-              </button>
-              <div className="btn btn-xs" {...provided.dragHandleProps}>
-                <Move className="w-4" label="Move up" />
-              </div>
-              <button className="btn btn-xs" onClick={handleDelete}>
-                <Trash className="w-4" label="Move up" />
-              </button>
-            </section>
-          </aside>
+          {permissions.includes("compose") ? (
+            <aside
+              className={clsx(
+                `absolute -top-3 right-1 z-[9999]`,
+                isSelected ? "block" : "hidden"
+              )}
+            >
+              <section className="btn-group">
+                <button className="btn btn-xs" onClick={handleMoveUp}>
+                  <ChevronUp className="w-4" label="Move up" />
+                </button>
+                <button className="btn btn-xs" onClick={handleMoveDown}>
+                  <ChevronDown className="w-4" label="Move up" />
+                </button>
+                <div className="btn btn-xs" {...provided.dragHandleProps}>
+                  <Move className="w-4" label="Move up" />
+                </div>
+                <button className="btn btn-xs" onClick={handleDelete}>
+                  <Trash className="w-4" label="Move up" />
+                </button>
+              </section>
+            </aside>
+          ) : null}
           <div className="pointer-events-none">
             <ErrorBoundary
               FallbackComponent={({ error, resetErrorBoundary }) => (
@@ -320,11 +324,11 @@ const HoverHighlightNode = (props) => {
       const targetBB = e.target.getBoundingClientRect()
       const pageWrapperBB = pageWrapperRef.current.getBoundingClientRect()
 
-      console.log("move", {
-        blockType,
-        e,
-        targetBB,
-      })
+      //   console.log("move", {
+      //     blockType,
+      //     e,
+      //     targetBB,
+      //   })
 
       setComputedStyle({
         width: `${targetBB.width}px`,
@@ -341,11 +345,9 @@ const HoverHighlightNode = (props) => {
     pageWrapperRef.current = document.getElementById("page-wrapper")
 
     pageWrapperRef.current.addEventListener("mousemove", handleMouseMove)
-    // pageWrapperRef.current.addEventListener("mouseleave", handleMouseLeave)
 
     return () => {
       pageWrapperRef.current.removeEventListener("mousemove", handleMouseMove)
-      //   pageWrapperRef.current.removeEventListener("mouseleave", handleMouseLeave)
     }
   }, [])
 

@@ -1,6 +1,4 @@
 import * as React from "react"
-import clsx from "clsx"
-import throttle from "lodash/throttle"
 
 import { DragDropContext } from "react-beautiful-dnd"
 // import { useBlockInputStore } from "./useBlocksInputStore"
@@ -15,12 +13,19 @@ import {
   BlockEditorContext,
   useBlockInputStore,
 } from "./BlockEditorStoreProvider"
+import { useOnScreen } from "utils/useOnScreen"
+
+export enum PermissionEnum {
+  edit = "edit",
+  compose = "compose",
+}
 
 interface BlockEditorProps {
   value: any
   tools: any
   source?: string
   onChange: (value: any) => void
+  permissions?: Array<PermissionEnum>
 }
 
 export const BlockEditor = (props: BlockEditorProps) => {
@@ -50,6 +55,7 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
     setValue,
     initBlocks,
     setToolbarOpen,
+    permissions,
   ] = useBlockInputStore(
     (state) => [
       state.addBlock,
@@ -58,12 +64,13 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
       state.setValue,
       state.init,
       state.setToolbarOpen,
+      state.permissions,
     ],
     isEqual
   )
 
   React.useEffect(() => {
-    initBlocks(props.source, props.tools, props.onChange)
+    initBlocks(props.source, props.tools, props.onChange, props.permissions)
   }, [])
 
   React.useEffect(() => {
@@ -113,9 +120,11 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
     <main className="border border-gray-200 rounded relative overflow-hidden">
       <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <header className="w-full h-8 bg-gray-50 flex justify-start items-center px-1">
-          <button className="btn btn-outline btn-xs" onClick={handleAdd}>
-            + Přidat blok
-          </button>
+          {permissions.includes("add") ? (
+            <button className="btn btn-outline btn-xs" onClick={handleAdd}>
+              + Přidat blok
+            </button>
+          ) : null}
         </header>
 
         <ToolsPanel />
@@ -135,22 +144,3 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
   )
 },
 isEqual)
-
-const useOnScreen = (ref) => {
-  const [isIntersecting, setIntersecting] = React.useState(false)
-
-  const observer = new IntersectionObserver(([entry]) => {
-    console.log("onScreen", entry.isIntersecting)
-    setIntersecting(entry.isIntersecting)
-  })
-
-  React.useEffect(() => {
-    observer.observe(ref.current)
-    // Remove the observer as soon as the component is unmounted
-    return () => {
-      observer.disconnect()
-    }
-  }, [])
-
-  return isIntersecting
-}

@@ -86,9 +86,10 @@
         source: null,
         onChange: null,
         toolbarOpen: false,
+        permissions: ["add", "edit", "compose"],
         blocks: [],
     };
-    var store$1 = function (set, get) { return (__assign(__assign({}, defaultState$1), { init: function (source, tools, onChange) {
+    var store$1 = function (set, get) { return (__assign(__assign({}, defaultState$1), { init: function (source, tools, onChange, permissions) {
             // console.log("init", value, tools)
             get().update(function (state) {
                 if (source) {
@@ -99,6 +100,9 @@
                 }
                 if (onChange) {
                     state.onChange = onChange;
+                }
+                if (permissions) {
+                    state.permissions = permissions;
                 }
                 state.selected = null;
             });
@@ -480,7 +484,8 @@
             state.blocks.length,
             state.tools,
             state.setToolbarOpen,
-        ]; }, isEqual__default['default']), setSelected = _c[0], isSelected = _c[1], deleteBlock = _c[2], moveBlock = _c[3], blocksCount = _c[4], tools = _c[5], setToolbarOpen = _c[6];
+            state.permissions,
+        ]; }, isEqual__default['default']), setSelected = _c[0], isSelected = _c[1], deleteBlock = _c[2], moveBlock = _c[3], blocksCount = _c[4], tools = _c[5], setToolbarOpen = _c[6], permissions = _c[7];
         var blockProps = useBlockInputStore(function (state) { return state.blocks.find(function (block) { return block.id === props.block.id; }); }, isEqual__default['default']);
         var handleClick = function (e) {
             setSelected(props.block.id);
@@ -506,7 +511,7 @@
         var Block = (_b = (_a = tools[props.block.type]) === null || _a === void 0 ? void 0 : _a.Component) !== null && _b !== void 0 ? _b : MissingBlock;
         console.log("PageBlock render", props.index, blockProps);
         return (React__namespace.createElement(reactBeautifulDnd.Draggable, { draggableId: props.block.id, index: props.index }, function (provided, snapshot) { return (React__namespace.createElement("section", __assign({ ref: provided.innerRef }, provided.draggableProps, { className: clsx__default['default']("relative"), onClick: handleClick, "data-block-type": props.block.type, "data-block-id": props.block.id }),
-            React__namespace.createElement("aside", { className: clsx__default['default']("absolute -top-3 right-1 z-[9999]", isSelected ? "block" : "hidden") },
+            permissions.includes("compose") ? (React__namespace.createElement("aside", { className: clsx__default['default']("absolute -top-3 right-1 z-[9999]", isSelected ? "block" : "hidden") },
                 React__namespace.createElement("section", { className: "btn-group" },
                     React__namespace.createElement("button", { className: "btn btn-xs", onClick: handleMoveUp },
                         React__namespace.createElement(ChevronUp, { className: "w-4", label: "Move up" })),
@@ -515,7 +520,7 @@
                     React__namespace.createElement("div", __assign({ className: "btn btn-xs" }, provided.dragHandleProps),
                         React__namespace.createElement(Move, { className: "w-4", label: "Move up" })),
                     React__namespace.createElement("button", { className: "btn btn-xs", onClick: handleDelete },
-                        React__namespace.createElement(Trash, { className: "w-4", label: "Move up" })))),
+                        React__namespace.createElement(Trash, { className: "w-4", label: "Move up" }))))) : null,
             React__namespace.createElement("div", { className: "pointer-events-none" },
                 React__namespace.createElement(reactErrorBoundary.ErrorBoundary, { FallbackComponent: function (_a) {
                         var error = _a.error, resetErrorBoundary = _a.resetErrorBoundary;
@@ -636,11 +641,11 @@
                 setBlockType(blockType);
                 var targetBB = e.target.getBoundingClientRect();
                 var pageWrapperBB = pageWrapperRef.current.getBoundingClientRect();
-                console.log("move", {
-                    blockType: blockType,
-                    e: e,
-                    targetBB: targetBB,
-                });
+                //   console.log("move", {
+                //     blockType,
+                //     e,
+                //     targetBB,
+                //   })
                 setComputedStyle({
                     width: targetBB.width + "px",
                     height: targetBB.height + "px",
@@ -654,16 +659,36 @@
         React__namespace.useEffect(function () {
             pageWrapperRef.current = document.getElementById("page-wrapper");
             pageWrapperRef.current.addEventListener("mousemove", handleMouseMove);
-            // pageWrapperRef.current.addEventListener("mouseleave", handleMouseLeave)
             return function () {
                 pageWrapperRef.current.removeEventListener("mousemove", handleMouseMove);
-                //   pageWrapperRef.current.removeEventListener("mouseleave", handleMouseLeave)
             };
         }, []);
         return (React__namespace.createElement("aside", { className: "absolute border-[2px] border-yellow-300 border-dashed pointer-events-none", style: __assign({ zIndex: 999 }, computedStyle) },
             React__namespace.createElement("section", { className: "absolute top-[-2px] left-[-2px] bg-yellow-300 rounded-br text-xs px-1 py-0.5" }, (_a = tools === null || tools === void 0 ? void 0 : tools[blockType]) === null || _a === void 0 ? void 0 : _a.title)));
     };
 
+    var useOnScreen = function (ref) {
+        var _a = React__namespace.useState(false), isIntersecting = _a[0], setIntersecting = _a[1];
+        var observer = new IntersectionObserver(function (_a) {
+            var entry = _a[0];
+            console.log("onScreen", entry.isIntersecting);
+            setIntersecting(entry.isIntersecting);
+        });
+        React__namespace.useEffect(function () {
+            observer.observe(ref.current);
+            // Remove the observer as soon as the component is unmounted
+            return function () {
+                observer.disconnect();
+            };
+        }, []);
+        return isIntersecting;
+    };
+
+    var PermissionEnum;
+    (function (PermissionEnum) {
+        PermissionEnum["edit"] = "edit";
+        PermissionEnum["compose"] = "compose";
+    })(PermissionEnum || (PermissionEnum = {}));
     var BlockEditor = function (props) {
         var editorRef = React__namespace.useRef(null);
         var isVisible = useOnScreen(editorRef);
@@ -679,9 +704,10 @@
             state.setValue,
             state.init,
             state.setToolbarOpen,
-        ]; }, isEqual__default['default']), addBlock = _a[0], moveBlock = _a[1], setSelected = _a[2], setValue = _a[3], initBlocks = _a[4], setToolbarOpen = _a[5];
+            state.permissions,
+        ]; }, isEqual__default['default']), addBlock = _a[0], moveBlock = _a[1], setSelected = _a[2], setValue = _a[3], initBlocks = _a[4], setToolbarOpen = _a[5], permissions = _a[6];
         React__namespace.useEffect(function () {
-            initBlocks(props.source, props.tools, props.onChange);
+            initBlocks(props.source, props.tools, props.onChange, props.permissions);
         }, []);
         React__namespace.useEffect(function () {
             setValue(props.value);
@@ -718,30 +744,13 @@
         // console.log("BlockEditor render")
         return (React__namespace.createElement("main", { className: "border border-gray-200 rounded relative overflow-hidden" },
             React__namespace.createElement(reactBeautifulDnd.DragDropContext, { onDragStart: handleDragStart, onDragEnd: handleDragEnd },
-                React__namespace.createElement("header", { className: "w-full h-8 bg-gray-50 flex justify-start items-center px-1" },
-                    React__namespace.createElement("button", { className: "btn btn-outline btn-xs", onClick: handleAdd }, "+ P\u0159idat blok")),
+                React__namespace.createElement("header", { className: "w-full h-8 bg-gray-50 flex justify-start items-center px-1" }, permissions.includes("add") ? (React__namespace.createElement("button", { className: "btn btn-outline btn-xs", onClick: handleAdd }, "+ P\u0159idat blok")) : null),
                 React__namespace.createElement(ToolsPanel, null),
                 React__namespace.createElement("section", { className: "flex" },
                     React__namespace.createElement("section", { className: "bg-gray-300 flex-1 overflow-auto p-4 relative", onClick: handleClickOutside },
                         React__namespace.createElement(PagePanel, null)),
                     React__namespace.createElement(SettingsPanel, null)))));
     }, isEqual__default['default']);
-    var useOnScreen = function (ref) {
-        var _a = React__namespace.useState(false), isIntersecting = _a[0], setIntersecting = _a[1];
-        var observer = new IntersectionObserver(function (_a) {
-            var entry = _a[0];
-            console.log("onScreen", entry.isIntersecting);
-            setIntersecting(entry.isIntersecting);
-        });
-        React__namespace.useEffect(function () {
-            observer.observe(ref.current);
-            // Remove the observer as soon as the component is unmounted
-            return function () {
-                observer.disconnect();
-            };
-        }, []);
-        return isIntersecting;
-    };
 
     var SettingsForm = function (props) {
         var formMethods = null;
