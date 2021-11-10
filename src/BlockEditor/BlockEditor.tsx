@@ -26,6 +26,7 @@ interface BlockEditorProps {
   source?: string
   onChange: (value: any) => void
   permissions?: Array<PermissionEnum>
+  settings?: Record<string, any>
 }
 
 export const BlockEditor = (props: BlockEditorProps) => {
@@ -56,6 +57,9 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
     initBlocks,
     setToolbarOpen,
     permissions,
+    setTools,
+    setSettings,
+    setSelectedInput,
   ] = useBlockInputStore(
     (state) => [
       state.addBlock,
@@ -65,13 +69,30 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
       state.init,
       state.setToolbarOpen,
       state.permissions,
+      state.setTools,
+      state.setSettings,
+      state.setSelectedInput,
     ],
     isEqual
   )
 
   React.useEffect(() => {
-    initBlocks(props.source, props.tools, props.onChange, props.permissions)
+    initBlocks(
+      props.source,
+      props.tools,
+      props.settings,
+      props.onChange,
+      props.permissions
+    )
   }, [])
+
+  React.useEffect(() => {
+    setTools(props.tools)
+  }, [props.tools])
+
+  React.useEffect(() => {
+    setSettings(props.settings)
+  }, [props.settings])
 
   React.useEffect(() => {
     setValue(props.value)
@@ -79,6 +100,7 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
 
   const handleClickOutside = () => {
     setSelected(null)
+    setSelectedInput(null)
     setToolbarOpen(false)
   }
 
@@ -89,7 +111,7 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
   }
 
   const handleDragEnd = (result) => {
-    // console.log("result", result)
+    console.log("result", result)
     const { source, destination } = result
 
     // dropped outside
@@ -130,10 +152,7 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
         <ToolsPanel />
 
         <section className="flex">
-          <section
-            className="bg-gray-300 flex-1 overflow-auto p-4 relative"
-            onClick={handleClickOutside}
-          >
+          <section className="bg-gray-300 flex-1 overflow-auto p-6 relative">
             <PagePanel />
           </section>
 

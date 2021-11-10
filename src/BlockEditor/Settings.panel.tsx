@@ -22,23 +22,56 @@ export const SettingsPanel = React.memo(function SettingsPanel(props) {
       let blockIndex = state.blocks.findIndex(
         (block) => block.id == state.selected
       )
+
       return {
         id: block.id,
         type: block.type,
         version: block.version,
         source: `${state.source}[${blockIndex}]._$settings`,
+        withSettings: state?.tools?.[block.type]?.Settings,
       }
     }
+
     return null
   }, isEqual)
 
-  const [setSelected, tools] = useBlockInputStore(
-    (state) => [state.setSelected, state.tools],
+  const settingsMeta = useBlockInputStore((state) => {
+    if (state.selectedInput) {
+      let settings = state.settings.find(
+        (sett) => sett.type == state.selectedInput.settings
+      )
+      return {
+        ...settings,
+        props: {
+          ...state.selectedInput,
+          source: `${
+            state.selectedInput.source[0] === "." ? blockMeta.source : ""
+          }${state.selectedInput.source}`,
+        },
+      }
+    }
+
+    return null
+  }, isEqual)
+
+  const [setSelected, tools, setSelectedInput, settings] = useBlockInputStore(
+    (state) => [
+      state.setSelected,
+      state.tools,
+      state.setSelectedInput,
+      state.settings,
+    ],
     isEqual
   )
 
   const handleClose = (e) => {
     setSelected(null)
+    setSelectedInput(null)
+    e.preventDefault()
+  }
+
+  const handleCloseInput = (e) => {
+    setSelectedInput(null)
     e.preventDefault()
   }
 
@@ -51,7 +84,7 @@ export const SettingsPanel = React.memo(function SettingsPanel(props) {
     return tools[blockMeta.type]?.title
   }, [blockMeta?.type])
 
-  // console.log("SettingsPanel render", blockMeta)
+  console.log("SettingsPanel render", blockMeta, settingsMeta)
 
   return (
     <aside
@@ -60,7 +93,45 @@ export const SettingsPanel = React.memo(function SettingsPanel(props) {
         fixedSettingsPanel ? "w-[340px] xl:w-[400px]" : "w-0"
       )}
     >
-      {blockMeta ? (
+      {settingsMeta ? (
+        <SettingsWrapper
+          id={`${blockMeta?.id}/${settingsMeta.props.source}`}
+          height={"auto"}
+        >
+          <header className="text-white bg-purple-600 cursor-move dragHandle p-1 pl-2 flex-none h-8 flex items-center justify-between">
+            <section className="truncate">
+              {settingsMeta.props.label ?? settingsMeta.props.source}
+            </section>
+
+            <aside className={"flex items-center justify-center"}>
+              <button
+                className="btn btn-xs bg-transparent border-none"
+                onClick={handleToggleFixedSidebar}
+              >
+                <ChevronDown
+                  className={clsx(
+                    "w-4 text-white transform",
+                    fixedSettingsPanel ? "rotate-90" : "-rotate-90"
+                  )}
+                  label="Move to sidebar"
+                />
+              </button>
+              <button
+                className="btn btn-xs bg-transparent border-none"
+                onClick={handleCloseInput}
+              >
+                <Close className="w-4 text-white" label="Close" />
+              </button>
+            </aside>
+          </header>
+
+          <section className="overflow-auto p-2 h-[calc(100%-2rem)] bg-gray-50">
+            <settingsMeta.Component {...settingsMeta.props} />
+          </section>
+        </SettingsWrapper>
+      ) : null}
+
+      {blockMeta && blockMeta.withSettings ? (
         <SettingsWrapper id={blockMeta.id}>
           <header className="text-white bg-blue-800 cursor-move dragHandle p-1 pl-2 flex-none h-8 flex items-center justify-between">
             <section className="truncate">
@@ -131,14 +202,14 @@ const SettingsWrapper = React.memo((props: any) => {
       enableUserSelectHack={false}
       dragHandleClassName={"dragHandle"}
       minWidth={300}
-      minHeight={300}
+      minHeight={100}
       maxHeight={"60vh"}
       maxWidth={600}
       default={{
         x: -480,
         y: window.scrollY + 50,
         width: 400,
-        height: "50vh",
+        height: props.height ?? "50vh",
       }}
     >
       {props.children}
@@ -153,13 +224,15 @@ const LazyloadComponent = (componentPath) => {
     let [ComponentContainer, setComponentContainer] = React.useState<any>(null)
 
     React.useEffect(() => {
-      const path = componentPath()
-      setComponentContainer(React.lazy(() => path))
-    }, [])
+      if (componentPath) {
+        const path = componentPath()
+        setComponentContainer(React.lazy(() => path))
+      }
+    }, [componentPath])
 
     return (
       <React.Suspense fallback={<div>Loading</div>}>
-        {ComponentContainer && <ComponentContainer {...props} />}
+        {ComponentContainer ? <ComponentContainer {...props} /> : null}
       </React.Suspense>
     )
   }

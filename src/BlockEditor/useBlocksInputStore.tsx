@@ -7,7 +7,9 @@ import { PermissionEnum } from "./BlockEditor"
 const defaultState = {
   time: Date.now(),
   selected: null,
-  tools: {},
+  selectedInput: null,
+  tools: [],
+  settings: [],
   source: null,
   onChange: null,
   toolbarOpen: false,
@@ -23,7 +25,7 @@ const defaultState = {
 
 const store = (set, get) => ({
   ...defaultState,
-  init: (source, tools, onChange, permissions) => {
+  init: (source, tools, settings, onChange, permissions) => {
     // console.log("init", value, tools)
 
     get().update((state) => {
@@ -31,10 +33,13 @@ const store = (set, get) => ({
         state.source = source
       }
       if (tools) {
-        state.tools = tools
+        state.tools = Array.isArray(tools) ? tools : Object.entries(tools)
       }
       if (onChange) {
         state.onChange = onChange
+      }
+      if (settings) {
+        state.settings = settings
       }
       if (permissions) {
         state.permissions = permissions
@@ -49,9 +54,28 @@ const store = (set, get) => ({
       }
     })
   },
+  setTools: (value) => {
+    get().update((state) => {
+      if (value) {
+        state.tools = value
+      }
+    })
+  },
+  setSettings: (value) => {
+    get().update((state) => {
+      if (value) {
+        state.settings = value
+      }
+    })
+  },
   setSelected: (id) => {
     get().update((state) => {
       state.selected = id
+    })
+  },
+  setSelectedInput: (settings) => {
+    get().update((state) => {
+      state.selectedInput = settings
     })
   },
   updateBlockData: (id, data) => {
@@ -62,12 +86,14 @@ const store = (set, get) => ({
   },
   addBlock: (blockType, index) => {
     get().update((state) => {
+      const tool = get().tools.find((tool) => tool.type === blockType)
+      console.log("addBlock", tool)
       state.blocks.splice(index, 0, {
         id: nanoid(),
         type: blockType,
-        data: get().tools[blockType].defaultData,
-        _$settings: get().tools[blockType].defaultData,
-        version: get().tools[blockType].version,
+        data: tool.defaultData,
+        _$settings: tool.defaultData,
+        version: tool.version,
       })
     })
     console.log("addBlock onChange", get().onChange)

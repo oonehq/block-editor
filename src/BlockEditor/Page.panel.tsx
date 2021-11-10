@@ -7,8 +7,11 @@ import { ErrorBoundary } from "react-error-boundary"
 import isEqual from "react-fast-compare"
 import { useHotkeys } from "react-hotkeys-hook"
 
-import { ChevronDown, ChevronUp, Move, Trash } from "./Icons"
+import { ChevronDown, ChevronUp, Close, Move, Trash } from "./Icons"
 import { useThrottle } from "utils/useThrottle"
+import { useFormState } from "react-final-form"
+import { usePrevious } from "utils/usePrevious"
+import useResizeObserver from "@react-hook/resize-observer"
 
 export const PagePanel = React.memo(function PagePanel(props) {
   const blocks = useBlockInputStore(
@@ -46,8 +49,8 @@ export const PagePanel = React.memo(function PagePanel(props) {
             )
           })}
           {provided.placeholder}
-          <SelectedHighlightNode />
           <HoverHighlightNode />
+          <SelectedHighlightNode />
         </section>
       )}
     </Droppable>
@@ -88,7 +91,7 @@ const PageBlock = React.memo(function PageBlock(props: any) {
     isEqual
   )
 
-  const blockProps = useBlockInputStore(
+  let blockProps = useBlockInputStore(
     (state) => state.blocks.find((block) => block.id === props.block.id),
     isEqual
   )
@@ -118,7 +121,11 @@ const PageBlock = React.memo(function PageBlock(props: any) {
     handlePrevent(e)
   }
 
-  const Block = tools[props.block.type]?.Component ?? MissingBlock
+  let Block =
+    tools.find((tool) => tool.type === props.block.type)?.Component ??
+    MissingBlock
+
+  Block = withCurrentRecord(Block)
 
   console.log("PageBlock render", props.index, blockProps)
 
@@ -156,6 +163,7 @@ const PageBlock = React.memo(function PageBlock(props: any) {
               </section>
             </aside>
           ) : null}
+
           <div className="pointer-events-none">
             <ErrorBoundary
               FallbackComponent={({ error, resetErrorBoundary }) => (
@@ -183,6 +191,115 @@ const PageBlock = React.memo(function PageBlock(props: any) {
     </Draggable>
   )
 })
+
+const HighlightInput = (props) => {
+  const [selected, setSelectedInput, selectedInput] = useBlockInputStore(
+    (state) => [state.selected, state.setSelectedInput, state.selectedInput],
+    isEqual
+  )
+
+  console.log("HighlightInput", props, selected)
+
+  const settings = JSON.parse(props.input.getAttribute("data-input"))
+
+  const [computedStyle, setComputedStyle] = React.useState<any>({
+    display: "none",
+  })
+
+  const pageWrapperRef = React.useRef<any>(null)
+  const selectedRef = React.useRef<any>(null)
+
+  React.useEffect(() => {
+    pageWrapperRef.current = document.getElementById("page-wrapper")
+  }, [])
+
+  const handleOpenSettings = () => {
+    setSelectedInput(settings)
+  }
+
+  const handleCloseInput = (e) => {
+    handlePrevent(e)
+    setSelectedInput(null)
+  }
+
+  const isSelected = selectedInput?.source === settings?.source
+
+  const prevSelected = usePrevious(selected)
+
+  React.useEffect(() => {
+    if (selected !== prevSelected) {
+      setSelectedInput(null)
+    }
+  }, [selected, prevSelected])
+
+  React.useEffect(() => {
+    let observer: ResizeObserver | null = null
+
+    if (selected) {
+      selectedRef.current = document.querySelector(
+        `[data-block-id='${selected}']`
+      )
+
+      const parentBB = selectedRef.current.getBoundingClientRect()
+      const targetBB = props.input.getBoundingClientRect()
+      const pageWrapperBB = pageWrapperRef.current.getBoundingClientRect()
+
+      setComputedStyle({
+        width: `${targetBB.width}px`,
+        height: `${targetBB.height}px`,
+        top: `${targetBB.top - pageWrapperBB.top - 1}px`,
+        left: `${targetBB.left - parentBB.left - 1}px`,
+        userSelect: "none",
+      })
+    } else {
+      setComputedStyle({
+        display: "none",
+      })
+    }
+
+    return () => {
+      observer?.disconnect()
+    }
+  }, [selected, props.input])
+
+  return (
+    <aside
+      onClick={handleOpenSettings}
+      className={clsx(
+        "absolute border-[2px] border-purple-300 hover:border-solid",
+        isSelected ? "border-solid" : "border-dashed"
+      )}
+      style={{
+        zIndex: 999,
+        ...computedStyle,
+      }}
+    >
+      <section
+        className={clsx(
+          "absolute top-0 left-[-2px] -translate-y-full rounded-tl rounded-tr text-white text-xs px-1 py-0.5 flex items-center group",
+          isSelected ? "bg-purple-600" : "bg-purple-400"
+        )}
+      >
+        {settings.label} - {settings.source}@{settings.settings}
+        {isSelected ? (
+          <button
+            className="bg-transparent border-none group hover:bg-gray-800 rounded-full h-3 inline-flex justify-center items-center ml-1"
+            onClick={handleCloseInput}
+          >
+            <Close className="w-3 text-white" label="Close" />
+          </button>
+        ) : null}
+      </section>
+    </aside>
+  )
+}
+
+const withCurrentRecord = (Component) => {
+  const { values } = useFormState()
+  return (props) => {
+    return <Component {...props} record={values} />
+  }
+}
 
 const handlePrevent = (e) => {
   e.preventDefault()
@@ -260,35 +377,58 @@ const useCopyPasteBlocks = () => {
 }
 
 const SelectedHighlightNode = (props) => {
-  const [selected] = useBlockInputStore((state) => [state.selected], isEqual)
+  const [selected, value, tools, setSelected] = useBlockInputStore(
+    (state) => [state.selected, state.value, state.tools, state.setSelected],
+    isEqual
+  )
+
+  const [blockType, setBlockType] = React.useState<any>("")
+  const [selectedInputs, setSelectedInputs] = React.useState<any>([])
 
   const [computedStyle, setComputedStyle] = React.useState<any>({})
 
-  const pageWrapperRef = React.useRef<any>(null)
-  const selectedRef = React.useRef<any>(null)
+  const pageRef = React.useRef<any>(null)
+  const blockRef = React.useRef<any>(null)
+
+  const handleClose = (e) => {
+    handlePrevent(e)
+    setSelected(null)
+  }
+
+  React.useLayoutEffect(() => {
+    pageRef.current = document.getElementById("page-wrapper")
+    blockRef.current = document.querySelector(`[data-block-id='${selected}']`)
+  }, [selected])
+
+  const pageWatchBB = useBoundingBox(document.getElementById("page-wrapper"))
+  const blocWatchkBB = useBoundingBox(
+    document.querySelector(`[data-block-id='${selected}']`)
+  )
+
+  console.log("SelectedBlock", pageWatchBB, blocWatchkBB)
 
   React.useEffect(() => {
-    pageWrapperRef.current = document.getElementById("page-wrapper")
-  }, [])
-
-  React.useEffect(() => {
-    if (selected) {
-      selectedRef.current = document.querySelector(
-        `[data-block-id='${selected}']`
+    if (
+      selected &&
+      pageWatchBB &&
+      blocWatchkBB &&
+      blockRef.current &&
+      pageRef.current
+    ) {
+      const blockType = blockRef.current.getAttribute("data-block-type")
+      setBlockType(blockType)
+      setSelectedInputs(
+        Array.from(blockRef.current.querySelectorAll("[data-input]"))
       )
-      const targetBB = selectedRef.current.getBoundingClientRect()
-      const pageWrapperBB = pageWrapperRef.current.getBoundingClientRect()
 
-      console.log("selected highlight", {
-        selected,
-        targetBB,
-      })
+      const pageBB = pageRef.current.getBoundingClientRect()
+      const blockBB = blockRef.current.getBoundingClientRect()
 
       setComputedStyle({
-        width: `${targetBB.width}px`,
-        height: `${targetBB.height}px`,
-        top: `${targetBB.top - pageWrapperBB.top - 1}px`,
-        left: `${targetBB.left - pageWrapperBB.left - 1}px`,
+        width: `${blockBB.width}px`,
+        height: `${blockBB.height}px`,
+        top: `${blockBB.top - pageBB.top - 1}px`,
+        left: `${blockBB.left - pageBB.left - 1}px`,
         userSelect: "none",
       })
     } else {
@@ -296,16 +436,41 @@ const SelectedHighlightNode = (props) => {
         display: "none",
       })
     }
-  }, [selected])
+  }, [selected, pageWatchBB, blocWatchkBB])
+
+  const tool = tools.find((tool) => tool.type === blockType)
+
+  // console.log("selectedInputs", selectedInputs)
 
   return (
-    <aside
-      className={"absolute border-[2px] border-yellow-300 pointer-events-none"}
-      style={{
-        zIndex: 999,
-        ...computedStyle,
-      }}
-    ></aside>
+    <>
+      <aside
+        className={
+          "absolute border-[2px] border-yellow-300 pointer-events-none"
+        }
+        style={{
+          zIndex: 999,
+          ...computedStyle,
+        }}
+      >
+        <section className="absolute top-0 left-[-2px] -translate-y-full bg-yellow-300 rounded-tl rounded-tr text-xs px-1 py-0.5 flex items-center pointer-events-auto">
+          {tool?.title ?? tool?.type}
+
+          <button
+            className="bg-transparent border-none group hover:bg-gray-800 rounded-full h-3 inline-flex justify-center items-center ml-1"
+            onClick={handleClose}
+          >
+            <Close
+              className="w-3 text-black group-hover:text-white"
+              label="Close"
+            />
+          </button>
+        </section>
+      </aside>
+      {selectedInputs.map((input) => {
+        return <HighlightInput input={input} />
+      })}
+    </>
   )
 }
 
@@ -338,6 +503,8 @@ const HoverHighlightNode = (props) => {
         transition: "all 100ms",
         userSelect: "none",
       })
+    } else {
+      setComputedStyle({ display: "none" })
     }
   }, 300)
 
@@ -351,6 +518,8 @@ const HoverHighlightNode = (props) => {
     }
   }, [])
 
+  const tool = tools.find((tool) => tool.type === blockType)
+
   return (
     <aside
       className={
@@ -361,9 +530,30 @@ const HoverHighlightNode = (props) => {
         ...computedStyle,
       }}
     >
-      <section className="absolute top-[-2px] left-[-2px] bg-yellow-300 rounded-br text-xs px-1 py-0.5">
-        {tools?.[blockType]?.title}
+      <section className="absolute top-0 left-[-2px] -translate-y-full bg-yellow-300 rounded-tl rounded-tr text-xs px-1 py-0.5 flex items-center">
+        {tool?.title ?? tool?.type}
       </section>
     </aside>
   )
+}
+
+const useBoundingBox = (target: any) => {
+  const [bb, setBB] = React.useState<DOMRect>()
+
+  React.useLayoutEffect(() => {
+    if (target?.getBoundingClientRect) {
+      setBB(target.getBoundingClientRect())
+    } else if (target?.current) {
+      setBB(target.current.getBoundingClientRect())
+    }
+  }, [target])
+
+  // Where the magic happens
+  useResizeObserver(target, (entry) => {
+    if (entry && entry.target) {
+      setBB(entry.target.getBoundingClientRect())
+    }
+  })
+
+  return bb
 }

@@ -45,21 +45,20 @@ const ToolsListWithFilter = (props) => {
         {(provided, snapshot) => (
           <section ref={provided.innerRef} {...provided.droppableProps}>
             {props.tools
-              ? Object.keys(props.tools).map((name, index) => {
+              ? props.tools.map((tool, index) => {
                   if (
                     selectedTag.length > 0 &&
-                    Array.isArray(props.tools[name].tags) &&
-                    !props.tools[name].tags.includes(selectedTag)
+                    Array.isArray(tool.tags) &&
+                    !tool.tags.includes(selectedTag)
                   ) {
                     return null
                   }
 
                   return (
                     <ToolsItem
-                      name={name}
                       index={index}
-                      block={props.tools[name]}
-                      key={`${name}-${index}`}
+                      block={tool}
+                      key={`${tool.type}-${index}`}
                     />
                   )
                 })
@@ -74,7 +73,7 @@ const ToolsListWithFilter = (props) => {
 const ToolsItem = (props) => {
   return (
     <article className="m-4">
-      <Draggable draggableId={props.name} index={props.index}>
+      <Draggable draggableId={props.block.type} index={props.index}>
         {(provided, snapshot) => (
           <article
             className="bg-white shadow-xl rounded p-1"
@@ -83,7 +82,8 @@ const ToolsItem = (props) => {
             {...provided.dragHandleProps}
           >
             <header className="text-center text-sm">
-              {props.block?.title ? props.block.title : props.name}
+              {props.block.type}
+              {props.block?.title ?? props.block.type}
             </header>
 
             {props.block?.previewImage ? (
@@ -117,8 +117,7 @@ const TagFilter = (props) => {
   useClickOutside(ref, () => (inputActive ? setInputActive(false) : null))
 
   React.useEffect(() => {
-    let tags = Object.keys(props.tools).reduce((result, toolName) => {
-      const tool = props.tools[toolName]
+    let tags = props.tools.reduce((result, tool) => {
       if (tool && tool.tags && Array.isArray(tool.tags)) {
         tool.tags.forEach((tag: string) => {
           if (!result.includes(tag)) {
