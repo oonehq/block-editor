@@ -16,9 +16,9 @@ const plugins = [
     minimize: true,
     extract: "style.css",
   }),
-  nodeResolve(),
-  commonjs(),
-  execute("yalc push --replace"),
+  // nodeResolve(),
+  // commonjs(),
+  execute("yalc publish && yalc push --replace"),
 ]
 
 export default {

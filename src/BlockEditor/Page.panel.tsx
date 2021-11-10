@@ -26,7 +26,7 @@ export const PagePanel = React.memo(function PagePanel(props) {
 
   useCopyPasteBlocks()
 
-  // console.log("PagePanel render", blocks)
+  console.log("PagePanel render", blocks)
 
   return (
     <Droppable droppableId="page">
@@ -77,6 +77,7 @@ const PageBlock = React.memo(function PageBlock(props: any) {
     tools,
     setToolbarOpen,
     permissions,
+    currentBlock,
   ] = useBlockInputStore(
     (state) => [
       state.setSelected,
@@ -87,12 +88,8 @@ const PageBlock = React.memo(function PageBlock(props: any) {
       state.tools,
       state.setToolbarOpen,
       state.permissions,
+      state.blocks.find((block) => block.id === props.block.id),
     ],
-    isEqual
-  )
-
-  let blockProps = useBlockInputStore(
-    (state) => state.blocks.find((block) => block.id === props.block.id),
     isEqual
   )
 
@@ -125,7 +122,12 @@ const PageBlock = React.memo(function PageBlock(props: any) {
     tools.find((tool) => tool.type === props.block.type)?.Component ??
     MissingBlock
 
-  Block = withCurrentRecord(Block)
+  // const { values } = useFormState()
+
+  let blockProps = {
+    ...currentBlock,
+    // record: values,
+  }
 
   console.log("PageBlock render", props.index, blockProps)
 
@@ -198,7 +200,7 @@ const HighlightInput = (props) => {
     isEqual
   )
 
-  console.log("HighlightInput", props, selected)
+  // console.log("HighlightInput", props, selected)
 
   const settings = JSON.parse(props.input.getAttribute("data-input"))
 
@@ -292,13 +294,6 @@ const HighlightInput = (props) => {
       </section>
     </aside>
   )
-}
-
-const withCurrentRecord = (Component) => {
-  const { values } = useFormState()
-  return (props) => {
-    return <Component {...props} record={values} />
-  }
 }
 
 const handlePrevent = (e) => {
@@ -405,7 +400,7 @@ const SelectedHighlightNode = (props) => {
     document.querySelector(`[data-block-id='${selected}']`)
   )
 
-  console.log("SelectedBlock", pageWatchBB, blocWatchkBB)
+  // console.log("SelectedBlock", pageWatchBB, blocWatchkBB)
 
   React.useEffect(() => {
     if (

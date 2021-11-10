@@ -26,14 +26,14 @@ const defaultState = {
 const store = (set, get) => ({
   ...defaultState,
   init: (source, tools, settings, onChange, permissions) => {
-    // console.log("init", value, tools)
+    console.log("init", tools)
 
     get().update((state) => {
       if (source) {
         state.source = source
       }
       if (tools) {
-        state.tools = Array.isArray(tools) ? tools : Object.entries(tools)
+        state.tools = Array.isArray(tools) ? tools : Object.values(tools)
       }
       if (onChange) {
         state.onChange = onChange
@@ -54,10 +54,10 @@ const store = (set, get) => ({
       }
     })
   },
-  setTools: (value) => {
+  setTools: (tools) => {
     get().update((state) => {
-      if (value) {
-        state.tools = value
+      if (tools) {
+        state.tools = Array.isArray(tools) ? tools : Object.values(tools)
       }
     })
   },

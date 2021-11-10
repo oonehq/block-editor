@@ -17,8 +17,11 @@ export const SettingsPanel = React.memo(function SettingsPanel(props) {
 
   // source is same as in react-admin = path to section of record/object that is edited
   const blockMeta = useBlockInputStore((state) => {
-    let block = state.blocks.find((block) => block.id == state.selected)
+    let block = state.blocks.find((block) => block.id === state.selected)
+
     if (block) {
+      let tool = state.tools.find((tool) => tool.type === block.type)
+
       let blockIndex = state.blocks.findIndex(
         (block) => block.id == state.selected
       )
@@ -27,8 +30,10 @@ export const SettingsPanel = React.memo(function SettingsPanel(props) {
         id: block.id,
         type: block.type,
         version: block.version,
+        title: tool.title,
         source: `${state.source}[${blockIndex}]._$settings`,
-        withSettings: state?.tools?.[block.type]?.Settings,
+        Settings: state?.tools?.find((tool) => tool.type === block.type)
+          ?.Settings,
       }
     }
 
@@ -79,11 +84,6 @@ export const SettingsPanel = React.memo(function SettingsPanel(props) {
     setFixedSettingsPanel(!fixedSettingsPanel)
   }
 
-  const title = React.useMemo(() => {
-    if (!blockMeta) return null
-    return tools[blockMeta.type]?.title
-  }, [blockMeta?.type])
-
   console.log("SettingsPanel render", blockMeta, settingsMeta)
 
   return (
@@ -131,11 +131,11 @@ export const SettingsPanel = React.memo(function SettingsPanel(props) {
         </SettingsWrapper>
       ) : null}
 
-      {blockMeta && blockMeta.withSettings ? (
+      {blockMeta && blockMeta.Settings ? (
         <SettingsWrapper id={blockMeta.id}>
-          <header className="text-white bg-blue-800 cursor-move dragHandle p-1 pl-2 flex-none h-8 flex items-center justify-between">
+          <header className="text-white bg-yellow-500 cursor-move dragHandle p-1 pl-2 flex-none h-8 flex items-center justify-between">
             <section className="truncate">
-              {title ?? "Nastavení stránky"}
+              {blockMeta.title ?? "Nastavení stránky"}
             </section>
 
             <aside className={"flex items-center justify-center"}>
@@ -241,10 +241,8 @@ const LazyloadComponent = (componentPath) => {
 const LazySettings = React.memo(function LazySettings(props: {
   blockMeta: any
 }) {
-  const tools = useBlockInputStore((state) => state.tools, isEqual)
-
   const Settings = React.useMemo(
-    () => LazyloadComponent(tools[props.blockMeta.type]?.Settings),
+    () => LazyloadComponent(props.blockMeta?.Settings),
     [props.blockMeta.id]
   )
 

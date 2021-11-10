@@ -82,7 +82,6 @@ const ToolsItem = (props) => {
             {...provided.dragHandleProps}
           >
             <header className="text-center text-sm">
-              {props.block.type}
               {props.block?.title ?? props.block.type}
             </header>
 
