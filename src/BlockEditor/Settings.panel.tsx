@@ -195,6 +195,22 @@ const SettingsWrapper = React.memo((props: any) => {
     return <>{props.children}</>
   }
 
+  const windowH = window.innerHeight
+  const topScroll = window.scrollY
+  const editorViewportTop =
+    document.getElementById("page-wrapper")?.getBoundingClientRect()?.top ?? 0
+  const editorTopPos = editorViewportTop + topScroll
+
+  const y = Math.max(50, windowH * 0.25 + topScroll - editorTopPos)
+
+  console.log("posY", {
+    y,
+    editorTopPos,
+    topScroll,
+    editorViewportTop,
+    windowH,
+  })
+
   return (
     <Rnd
       key={props.id}
@@ -207,7 +223,7 @@ const SettingsWrapper = React.memo((props: any) => {
       maxWidth={600}
       default={{
         x: -480,
-        y: window.scrollY + 50,
+        y,
         width: 400,
         height: props.height ?? "50vh",
       }}

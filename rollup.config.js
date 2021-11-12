@@ -17,7 +17,7 @@ const plugins = [
     extract: "style.css",
   }),
   // nodeResolve(),
-  // commonjs(),
+  commonjs(),
   execute("yalc publish && yalc push --replace"),
 ]
 

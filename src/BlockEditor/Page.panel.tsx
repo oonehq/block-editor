@@ -78,6 +78,7 @@ const PageBlock = React.memo(function PageBlock(props: any) {
     setToolbarOpen,
     permissions,
     currentBlock,
+    source,
   ] = useBlockInputStore(
     (state) => [
       state.setSelected,
@@ -89,6 +90,7 @@ const PageBlock = React.memo(function PageBlock(props: any) {
       state.setToolbarOpen,
       state.permissions,
       state.blocks.find((block) => block.id === props.block.id),
+      state.source,
     ],
     isEqual
   )
@@ -122,11 +124,11 @@ const PageBlock = React.memo(function PageBlock(props: any) {
     tools.find((tool) => tool.type === props.block.type)?.Component ??
     MissingBlock
 
-  // const { values } = useFormState()
+  const record = useFormValuesCache()
 
   let blockProps = {
     ...currentBlock,
-    // record: values,
+    record,
   }
 
   console.log("PageBlock render", props.index, blockProps)
@@ -551,4 +553,16 @@ const useBoundingBox = (target: any) => {
   })
 
   return bb
+}
+
+const useFormValuesCache = () => {
+  const { values } = useFormState()
+
+  console.log("values", values)
+
+  const record = React.useMemo(() => {
+    return values
+  }, [values])
+
+  return record
 }
