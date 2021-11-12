@@ -228,9 +228,9 @@ var SettingsPanel = React.memo(function SettingsPanel(props) {
                 id: block.id,
                 type: block.type,
                 version: block.version,
-                title: tool.title,
+                title: tool === null || tool === void 0 ? void 0 : tool.title,
                 source: state.source + "[" + blockIndex + "]._$settings",
-                Settings: (_b = (_a = state === null || state === void 0 ? void 0 : state.tools) === null || _a === void 0 ? void 0 : _a.find(function (tool) { return tool.type === block.type; })) === null || _b === void 0 ? void 0 : _b.Settings,
+                Settings: (_b = (_a = state === null || state === void 0 ? void 0 : state.tools) === null || _a === void 0 ? void 0 : _a.find(function (tool) { return (tool === null || tool === void 0 ? void 0 : tool.type) === block.type; })) === null || _b === void 0 ? void 0 : _b.Settings,
             };
         }
         return null;

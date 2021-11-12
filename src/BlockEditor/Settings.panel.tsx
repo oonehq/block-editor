@@ -30,9 +30,9 @@ export const SettingsPanel = React.memo(function SettingsPanel(props) {
         id: block.id,
         type: block.type,
         version: block.version,
-        title: tool.title,
+        title: tool?.title,
         source: `${state.source}[${blockIndex}]._$settings`,
-        Settings: state?.tools?.find((tool) => tool.type === block.type)
+        Settings: state?.tools?.find((tool) => tool?.type === block.type)
           ?.Settings,
       }
     }
