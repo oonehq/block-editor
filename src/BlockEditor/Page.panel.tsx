@@ -9,7 +9,7 @@ import { useHotkeys } from "react-hotkeys-hook"
 
 import { ChevronDown, ChevronUp, Close, Move, Trash } from "./Icons"
 import { useThrottle } from "utils/useThrottle"
-import { useFormState } from "react-final-form"
+import { useCurrentRecord } from "./useCurrentRecord"
 import { usePrevious } from "utils/usePrevious"
 import useResizeObserver from "@react-hook/resize-observer"
 
@@ -124,7 +124,7 @@ const PageBlock = React.memo(function PageBlock(props: any) {
     tools.find((tool) => tool.type === props.block.type)?.Component ??
     MissingBlock
 
-  const record = useFormValuesCache()
+  const record = useCurrentRecord()
 
   let blockProps = {
     ...currentBlock,
@@ -553,16 +553,4 @@ const useBoundingBox = (target: any) => {
   })
 
   return bb
-}
-
-const useFormValuesCache = () => {
-  const { values } = useFormState()
-
-  console.log("values", values)
-
-  const record = React.useMemo(() => {
-    return values
-  }, [values])
-
-  return record
 }
