@@ -11,6 +11,7 @@ import produce from 'immer';
 import { nanoid } from 'nanoid';
 import { persist } from 'zustand/middleware';
 import { useFormState } from 'react-final-form';
+import { useResourceContext, useGetMany } from 'react-admin';
 import useResizeObserver from '@react-hook/resize-observer';
 
 /*! *****************************************************************************
@@ -4278,23 +4279,28 @@ function get(object, path, defaultValue) {
 var get_1 = get;
 
 var languages = ["cs", "en", "ru", "sk"];
+var relations = {
+    blogposts: { tags: "blogtags" },
+};
 var useCurrentRecord = function () {
     var values = useFormState().values;
+    var fullRecord = cloneDeep_1(values);
+    fullRecord = useRecordWithRelations(fullRecord);
     var source = useBlockInputStore(function (s) { return s.source; });
     var record = React.useMemo(function () {
         var _a;
-        // _unset(values, source)
+        // _unset(fullRecord, source)
         var lastPart = (_a = source === null || source === void 0 ? void 0 : source.split(".").pop()) !== null && _a !== void 0 ? _a : "cs";
         var i18n = languages.includes(lastPart) ? lastPart : "cs";
-        return processTranslations(values, { i18n: i18n });
-    }, [values, source]);
+        return processTranslations(fullRecord, { i18n: i18n });
+    }, [fullRecord, source]);
     return record;
 };
 var processTranslations = function (value, options) {
     var _a, _b;
     var lang = (_a = options.i18n) !== null && _a !== void 0 ? _a : "cs";
     var result = cloneDeep_1(value);
-    console.log("useCurrentRecord start", lang, result);
+    // console.log("useCurrentRecord start", lang, result)
     var flatDoc = flat(result);
     var processedPaths = [];
     for (var _i = 0, _c = Object.keys(flatDoc); _i < _c.length; _i++) {
@@ -4315,6 +4321,24 @@ var processTranslations = function (value, options) {
     // console.log("useCurrentRecord paths", processedPaths)
     // console.log("useCurrentRecord result", result)
     return result;
+};
+var useRecordWithRelations = function (record) {
+    var resource = useResourceContext();
+    if (relations[resource]) {
+        for (var _i = 0, _a = Object.keys(relations[resource]); _i < _a.length; _i++) {
+            var relationPath = _a[_i];
+            var ids = get_1(record, relationPath);
+            var relatedResource = relations[resource][relationPath];
+            // console.log("useRecordWithRelations", relationPath, relatedResource, ids)
+            var response = useGetMany(relatedResource, ids, { enabled: true });
+            // console.log("useRecordWithRelations res", response)
+            if (response.data) {
+                record = set_1(record, relationPath, response.data);
+            }
+            return record;
+        }
+    }
+    return record;
 };
 
 var usePrevious = function (value) {

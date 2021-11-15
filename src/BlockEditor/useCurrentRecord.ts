@@ -1,5 +1,6 @@
 import * as React from "react"
 import { useFormState } from "react-final-form"
+import { useGetMany, useResourceContext } from "react-admin"
 
 import flatten from "flat"
 import _cloneDeep from "lodash/cloneDeep"
@@ -10,17 +11,25 @@ import { useBlockInputStore } from "./BlockEditorStoreProvider"
 
 const languages = ["cs", "en", "ru", "sk"]
 
+const relations = {
+  blogposts: { tags: "blogtags" },
+}
+
 export const useCurrentRecord = () => {
   const { values } = useFormState()
+
+  let fullRecord = _cloneDeep(values)
+
+  fullRecord = useRecordWithRelations(fullRecord)
   const source = useBlockInputStore((s) => s.source)
 
   const record = React.useMemo(() => {
-    // _unset(values, source)
+    // _unset(fullRecord, source)
     const lastPart = source?.split(".").pop() ?? "cs"
     const i18n = languages.includes(lastPart) ? lastPart : "cs"
 
-    return processTranslations(values, { i18n })
-  }, [values, source])
+    return processTranslations(fullRecord, { i18n })
+  }, [fullRecord, source])
 
   return record
 }
@@ -29,7 +38,7 @@ const processTranslations = (value, options) => {
   const lang = options.i18n ?? "cs"
   let result = _cloneDeep(value)
 
-  console.log("useCurrentRecord start", lang, result)
+  // console.log("useCurrentRecord start", lang, result)
 
   const flatDoc = flatten(result)
 
@@ -58,4 +67,28 @@ const processTranslations = (value, options) => {
   // console.log("useCurrentRecord result", result)
 
   return result
+}
+
+const useRecordWithRelations = (record) => {
+  const resource = useResourceContext()
+
+  if (relations[resource]) {
+    for (let relationPath of Object.keys(relations[resource])) {
+      const ids = _get(record, relationPath)
+      const relatedResource = relations[resource][relationPath]
+      // console.log("useRecordWithRelations", relationPath, relatedResource, ids)
+
+      const response = useGetMany(relatedResource, ids, { enabled: true })
+
+      // console.log("useRecordWithRelations res", response)
+
+      if (response.data) {
+        record = _set(record, relationPath, response.data)
+      }
+
+      return record
+    }
+  }
+
+  return record
 }

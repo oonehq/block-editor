@@ -1,8 +1,8 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('react'), require('react-beautiful-dnd'), require('react-fast-compare'), require('react-hotkeys-hook'), require('react-error-boundary'), require('clsx'), require('react-rnd'), require('zustand'), require('immer'), require('nanoid'), require('zustand/middleware'), require('react-final-form'), require('@react-hook/resize-observer')) :
-    typeof define === 'function' && define.amd ? define(['exports', 'react', 'react-beautiful-dnd', 'react-fast-compare', 'react-hotkeys-hook', 'react-error-boundary', 'clsx', 'react-rnd', 'zustand', 'immer', 'nanoid', 'zustand/middleware', 'react-final-form', '@react-hook/resize-observer'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.BlockEditor = {}, global.React, global.reactBeautifulDnd, global.isEqual, global.reactHotkeysHook, global.reactErrorBoundary, global.clsx, global.reactRnd, global.create, global.produce, global.nanoid, global.middleware, global.reactFinalForm, global.useResizeObserver));
-}(this, (function (exports, React, reactBeautifulDnd, isEqual, reactHotkeysHook, reactErrorBoundary, clsx, reactRnd, create, produce, nanoid, middleware, reactFinalForm, useResizeObserver) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('react'), require('react-beautiful-dnd'), require('react-fast-compare'), require('react-hotkeys-hook'), require('react-error-boundary'), require('clsx'), require('react-rnd'), require('zustand'), require('immer'), require('nanoid'), require('zustand/middleware'), require('react-final-form'), require('react-admin'), require('@react-hook/resize-observer')) :
+    typeof define === 'function' && define.amd ? define(['exports', 'react', 'react-beautiful-dnd', 'react-fast-compare', 'react-hotkeys-hook', 'react-error-boundary', 'clsx', 'react-rnd', 'zustand', 'immer', 'nanoid', 'zustand/middleware', 'react-final-form', 'react-admin', '@react-hook/resize-observer'], factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.BlockEditor = {}, global.React, global.reactBeautifulDnd, global.isEqual, global.reactHotkeysHook, global.reactErrorBoundary, global.clsx, global.reactRnd, global.create, global.produce, global.nanoid, global.middleware, global.reactFinalForm, global.reactAdmin, global.useResizeObserver));
+}(this, (function (exports, React, reactBeautifulDnd, isEqual, reactHotkeysHook, reactErrorBoundary, clsx, reactRnd, create, produce, nanoid, middleware, reactFinalForm, reactAdmin, useResizeObserver) { 'use strict';
 
     function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -4298,23 +4298,28 @@
     var get_1 = get;
 
     var languages = ["cs", "en", "ru", "sk"];
+    var relations = {
+        blogposts: { tags: "blogtags" },
+    };
     var useCurrentRecord = function () {
         var values = reactFinalForm.useFormState().values;
+        var fullRecord = cloneDeep_1(values);
+        fullRecord = useRecordWithRelations(fullRecord);
         var source = useBlockInputStore(function (s) { return s.source; });
         var record = React__namespace.useMemo(function () {
             var _a;
-            // _unset(values, source)
+            // _unset(fullRecord, source)
             var lastPart = (_a = source === null || source === void 0 ? void 0 : source.split(".").pop()) !== null && _a !== void 0 ? _a : "cs";
             var i18n = languages.includes(lastPart) ? lastPart : "cs";
-            return processTranslations(values, { i18n: i18n });
-        }, [values, source]);
+            return processTranslations(fullRecord, { i18n: i18n });
+        }, [fullRecord, source]);
         return record;
     };
     var processTranslations = function (value, options) {
         var _a, _b;
         var lang = (_a = options.i18n) !== null && _a !== void 0 ? _a : "cs";
         var result = cloneDeep_1(value);
-        console.log("useCurrentRecord start", lang, result);
+        // console.log("useCurrentRecord start", lang, result)
         var flatDoc = flat(result);
         var processedPaths = [];
         for (var _i = 0, _c = Object.keys(flatDoc); _i < _c.length; _i++) {
@@ -4335,6 +4340,24 @@
         // console.log("useCurrentRecord paths", processedPaths)
         // console.log("useCurrentRecord result", result)
         return result;
+    };
+    var useRecordWithRelations = function (record) {
+        var resource = reactAdmin.useResourceContext();
+        if (relations[resource]) {
+            for (var _i = 0, _a = Object.keys(relations[resource]); _i < _a.length; _i++) {
+                var relationPath = _a[_i];
+                var ids = get_1(record, relationPath);
+                var relatedResource = relations[resource][relationPath];
+                // console.log("useRecordWithRelations", relationPath, relatedResource, ids)
+                var response = reactAdmin.useGetMany(relatedResource, ids, { enabled: true });
+                // console.log("useRecordWithRelations res", response)
+                if (response.data) {
+                    record = set_1(record, relationPath, response.data);
+                }
+                return record;
+            }
+        }
+        return record;
     };
 
     var usePrevious = function (value) {
