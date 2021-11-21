@@ -16,12 +16,11 @@ const relations = {
 }
 
 export const useCurrentRecord = () => {
-  const { values } = useFormState()
+  const { values } = useFormState({ subscription: { values: true } })
+  const source = useBlockInputStore((s) => s.source)
 
   let fullRecord = _cloneDeep(values)
-
   fullRecord = useRecordWithRelations(fullRecord)
-  const source = useBlockInputStore((s) => s.source)
 
   const record = React.useMemo(() => {
     // _unset(fullRecord, source)

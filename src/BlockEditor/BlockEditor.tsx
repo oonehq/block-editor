@@ -136,7 +136,7 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
     setToolbarOpen(true)
   }
 
-  // console.log("BlockEditor render")
+  console.log("BlockEditor render")
 
   return (
     <main className="border border-gray-200 rounded relative overflow-hidden">
@@ -152,7 +152,7 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
         <ToolsPanel />
 
         <section className="flex">
-          <section className="bg-gray-300 flex-1 overflow-auto p-6 relative">
+          <section className="bg-gray-300 flex-1 overflow-auto p-6 relative min-h-[500px]">
             <PagePanel />
           </section>
 

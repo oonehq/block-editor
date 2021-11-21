@@ -78,7 +78,6 @@ const PageBlock = React.memo(function PageBlock(props: any) {
     setToolbarOpen,
     permissions,
     currentBlock,
-    source,
   ] = useBlockInputStore(
     (state) => [
       state.setSelected,
@@ -90,7 +89,6 @@ const PageBlock = React.memo(function PageBlock(props: any) {
       state.setToolbarOpen,
       state.permissions,
       state.blocks.find((block) => block.id === props.block.id),
-      state.source,
     ],
     isEqual
   )

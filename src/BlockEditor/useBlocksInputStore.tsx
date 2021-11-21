@@ -26,7 +26,7 @@ const defaultState = {
 const store = (set, get) => ({
   ...defaultState,
   init: (source, tools, settings, onChange, permissions) => {
-    console.log("init", tools)
+    // console.log("init", tools)
 
     get().update((state) => {
       if (source) {
