@@ -74,15 +74,15 @@ const useRecordWithRelations = (record) => {
   if (relations[resource]) {
     for (let relationPath of Object.keys(relations[resource])) {
       const ids = _get(record, relationPath)
-      const relatedResource = relations[resource][relationPath]
-      // console.log("useRecordWithRelations", relationPath, relatedResource, ids)
 
-      const response = useGetMany(relatedResource, ids, { enabled: true })
+      if (Array.isArray(ids) && ids.length > 0) {
+        const relatedResource = relations[resource][relationPath]
 
-      // console.log("useRecordWithRelations res", response)
+        const response = useGetMany(relatedResource, ids, { enabled: true })
 
-      if (response.data) {
-        record = _set(record, relationPath, response.data)
+        if (response.data) {
+          record = _set(record, relationPath, response.data)
+        }
       }
 
       return record

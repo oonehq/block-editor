@@ -33,7 +33,7 @@ export const BlockEditor = (props: BlockEditorProps) => {
   const editorRef = React.useRef(null)
   const isVisible = useOnScreen(editorRef)
 
-  console.log("BlockEditor isVisible", isVisible)
+  // console.log("BlockEditor isVisible", isVisible)
 
   return (
     <main ref={editorRef}>
