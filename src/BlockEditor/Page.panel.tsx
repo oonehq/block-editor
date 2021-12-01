@@ -13,6 +13,8 @@ import { useCurrentRecord } from "./useCurrentRecord"
 import { usePrevious } from "utils/usePrevious"
 import useResizeObserver from "@react-hook/resize-observer"
 
+const dev = process.env.NODE_ENV !== "production"
+
 export const PagePanel = React.memo(function PagePanel(props) {
   const blocks = useBlockInputStore(
     (state) =>
@@ -449,8 +451,7 @@ const SelectedHighlightNode = (props) => {
         }}
       >
         <section className="absolute top-0 left-[-2px] -translate-y-full bg-yellow-300 rounded-tl rounded-tr text-xs px-1 py-0.5 flex items-center pointer-events-auto">
-          {tool?.title ?? tool?.type}
-
+          {tool?.title ?? tool?.type} {dev ? `(${tool?.type})` : null}
           <button
             className="bg-transparent border-none group hover:bg-gray-800 rounded-full h-3 inline-flex justify-center items-center ml-1"
             onClick={handleClose}
