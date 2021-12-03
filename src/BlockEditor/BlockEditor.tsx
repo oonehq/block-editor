@@ -108,6 +108,8 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
 
   const handleDragStart = (event) => {
     setToolbarOpen(false)
+    setSelected(null)
+    setSelectedInput(null)
   }
 
   const handleDragEnd = (result) => {
