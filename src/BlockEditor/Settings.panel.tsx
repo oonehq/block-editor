@@ -11,10 +11,6 @@ import { useBlockEditorStore } from "./useBlockEditorStore"
 const dev = process.env.NODE_ENV !== "production"
 
 export const SettingsPanel = React.memo(function SettingsPanel(props) {
-  const [fixedSettingsPanel, setFixedSettingsPanel] = useBlockEditorStore(
-    (state) => [state.fixedSettingsPanel, state.setFixedSettingsPanel]
-  )
-
   // source is same as in react-admin = path to section of record/object that is edited
   const blockMeta = useBlockInputStore((state) => {
     let block = state.blocks.find((block) => block.id === state.selected)
@@ -80,17 +76,13 @@ export const SettingsPanel = React.memo(function SettingsPanel(props) {
     e.preventDefault()
   }
 
-  const handleToggleFixedSidebar = () => {
-    setFixedSettingsPanel(!fixedSettingsPanel)
-  }
-
   console.log("SettingsPanel render", blockMeta, settingsMeta)
 
   return (
     <aside
       className={clsx(
         "bg-gray-50 flex-0 p-2 overflow-auto max-h-[80vh]",
-        fixedSettingsPanel ? "w-[340px] xl:w-[400px]" : "w-0"
+        "w-0"
       )}
     >
       {settingsMeta ? (
@@ -104,18 +96,6 @@ export const SettingsPanel = React.memo(function SettingsPanel(props) {
             </section>
 
             <aside className={"flex items-center justify-center"}>
-              <button
-                className="btn btn-xs bg-transparent border-none"
-                onClick={handleToggleFixedSidebar}
-              >
-                <ChevronDown
-                  className={clsx(
-                    "w-4 text-white transform",
-                    fixedSettingsPanel ? "rotate-90" : "-rotate-90"
-                  )}
-                  label="Move to sidebar"
-                />
-              </button>
               <button
                 className="btn btn-xs bg-transparent border-none"
                 onClick={handleCloseInput}
@@ -139,18 +119,6 @@ export const SettingsPanel = React.memo(function SettingsPanel(props) {
             </section>
 
             <aside className={"flex items-center justify-center"}>
-              <button
-                className="btn btn-xs bg-transparent border-none"
-                onClick={handleToggleFixedSidebar}
-              >
-                <ChevronDown
-                  className={clsx(
-                    "w-4 text-white transform",
-                    fixedSettingsPanel ? "rotate-90" : "-rotate-90"
-                  )}
-                  label="Move to sidebar"
-                />
-              </button>
               <button
                 className="btn btn-xs bg-transparent border-none"
                 onClick={handleClose}
@@ -187,14 +155,6 @@ export const SettingsPanel = React.memo(function SettingsPanel(props) {
 }, isEqual)
 
 const SettingsWrapper = React.memo((props: any) => {
-  const [fixedSettingsPanel] = useBlockEditorStore((state) => [
-    state.fixedSettingsPanel,
-  ])
-
-  if (fixedSettingsPanel) {
-    return <>{props.children}</>
-  }
-
   const windowH = window.innerHeight
   const topScroll = window.scrollY
   const editorViewportTop =
@@ -202,14 +162,6 @@ const SettingsWrapper = React.memo((props: any) => {
   const editorTopPos = editorViewportTop + topScroll
 
   const y = Math.max(50, windowH * 0.25 + topScroll - editorTopPos)
-
-  console.log("posY", {
-    y,
-    editorTopPos,
-    topScroll,
-    editorViewportTop,
-    windowH,
-  })
 
   return (
     <Rnd
