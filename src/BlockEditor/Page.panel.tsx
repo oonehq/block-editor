@@ -168,7 +168,7 @@ const PageBlock = React.memo(function PageBlock(props: any) {
             </aside>
           ) : null}
 
-          <div className="pointer-events-none">
+          <div className={dev ? "" : "pointer-events-none"}>
             <ErrorBoundary
               FallbackComponent={({ error, resetErrorBoundary }) => (
                 <div role="alert">
