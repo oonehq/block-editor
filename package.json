@@ -1,5 +1,5 @@
 {
-  "name": "@oonehq/block-editor",
+  "name": "@spadgeaki/block-editor",
   "version": "1.1.11",
   "main": "./dist/index.umd.js",
   "module": "./dist/index.es.js",
@@ -28,8 +28,10 @@
   "dependencies": {
     "@react-hook/resize-observer": "^1.2.4",
     "@rollup/plugin-typescript": "^8.2.3",
+    "@types/debug": "^4.1.7",
     "clsx": "^1.1.1",
     "daisyui": "^1.10.0",
+    "debug": "^4.3.3",
     "deep-copy": "^1.4.2",
     "flat": "^5.0.2",
     "html-to-image": "^1.9.0",

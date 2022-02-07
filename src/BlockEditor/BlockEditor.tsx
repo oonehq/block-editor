@@ -14,6 +14,9 @@ import {
   useBlockInputStore,
 } from "./BlockEditorStoreProvider"
 import { useOnScreen } from "utils/useOnScreen"
+import { logger } from "utils/debug"
+
+const log = logger.extend("BlockEditor")
 
 export enum PermissionEnum {
   edit = "edit",
@@ -138,7 +141,7 @@ export const BlockEditorInstance = React.memo(function BlockEditorInstance(
     setToolbarOpen(true)
   }
 
-  console.log("BlockEditor render")
+  log("rendered")
 
   return (
     <main className="border border-gray-200 rounded relative overflow-hidden">
