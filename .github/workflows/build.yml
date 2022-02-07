@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: "14.x"
           registry-url: "https://npm.pkg.github.com"
-          scope: "@oonehq"
+          scope: "@spadgeaki"
       - run: npm install -g yarn
       - run: yarn install
       - run: yarn build
