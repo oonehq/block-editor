@@ -78,7 +78,7 @@ const useRecordWithRelations = (record) => {
       if (Array.isArray(ids) && ids.length > 0) {
         const relatedResource = relations[resource][relationPath]
 
-        const response = useGetMany(relatedResource, ids, { enabled: true })
+        const response = useGetMany(relatedResource, { ids }, { enabled: true })
 
         if (response.data) {
           record = _set(record, relationPath, response.data)
